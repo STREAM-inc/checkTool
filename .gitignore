@@ -1,14 +1,22 @@
 # ===== 秘密情報・個人設定（絶対にアップロードしない）=====
 APIキー.txt
+setting.json
+# 顧客ごとのルール（顧客名・クレーム案件・社内パスを含むので公開リポジトリには入れない）
+顧客ルール.json
 設定.txt
 tasks.json
 tasks.json.bak
+history.json
+history.json.bak
 desktop.ini
+
 
 # ===== 顧客データ・作業データ（各ツール共通）=====
 input/
 input_done/
 output/
+download/
+work/
 IN/
 OUT/
 cache/

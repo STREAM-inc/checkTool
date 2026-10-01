@@ -20,7 +20,7 @@ header input{width:130px}
 @media(max-width:1300px){.wrap{grid-template-columns:220px minmax(0,1fr)}.taskbar{grid-row:1/span 2}
   .wrap>main{grid-column:2;grid-row:1}.wrap>aside{grid-column:2;grid-row:2}}  /* 課題・結果を処理ルールより上に */
 @media(max-width:900px){.wrap{grid-template-columns:1fr}.taskbar,.wrap>main,.wrap>aside{grid-column:auto;grid-row:auto}}
-.taskbar{position:sticky;top:60px;align-self:start;max-height:calc(100vh - 76px);overflow:auto}
+.taskbar{position:sticky;top:60px;align-self:start;max-height:calc(100vh - 76px);overflow-y:auto;overflow-x:hidden}
 @media(max-width:900px){.taskbar{position:static;max-height:none}}
 .tfilter{display:flex;gap:4px;margin-bottom:8px}
 .tfilter button{flex:1;padding:2px 0;font-size:12px}
@@ -33,6 +33,9 @@ header input{width:130px}
 .tasklist .tn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
 .tasklist .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tasklist .tn .small{white-space:nowrap}
+.tasklist .due{display:block}
+.tasklist .due.over{color:var(--ng);font-weight:700}
+.tasklist .due.today{color:var(--info);font-weight:700}
 .tasklist li.done .nm{text-decoration:line-through;color:var(--sub)}
 .tasklist .ic{border:none;background:none;padding:0 2px;color:var(--sub);display:none}
 .tasklist li:hover .ic,.tasklist li.active .ic{display:inline}
@@ -86,6 +89,12 @@ pre{white-space:pre-wrap;font:12px/1.5 Consolas,monospace;background:#f8f9fb;pad
 .samples td{font-size:12px}
 .busy{position:fixed;inset:0;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;z-index:20;font-size:16px;font-weight:700}
 .busy.on{display:flex}
+.busy-box{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.busy-box button{font-size:13px;font-weight:400;padding:4px 18px}
+.toast{position:fixed;right:16px;bottom:16px;z-index:25;max-width:min(520px,calc(100vw - 32px));padding:8px 14px;border-radius:8px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.15);background:#1d2330;color:#fff}
+.toast.info{background:#1d2330}
+.toast.warn{background:var(--info-weak);color:var(--info);border:1px solid #e9c46a}
+.toast a{color:inherit;font-weight:700}
 .hint{background:var(--info-weak);color:var(--info);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:10px}
 .err{background:var(--ng-weak);color:var(--ng);padding:8px 12px;border-radius:8px;margin-bottom:10px;white-space:pre-wrap}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -119,6 +128,63 @@ dialog#addDlg::backdrop{background:rgba(29,35,48,.45)}
 .dlg-x:hover{color:var(--ink)}
 .dlg-body{padding:14px 16px 2px;max-height:calc(100vh - 140px);overflow:auto}
 .dlg-body .card{border:none;padding:0}
+dialog#kidDlg{border:none;border-radius:12px;padding:0;width:min(1400px,calc(100vw - 32px));max-width:none;box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--ink)}
+dialog#kidDlg::backdrop{background:rgba(29,35,48,.45)}
+.kid-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 16px}
+@media(max-width:900px){.kid-cols{grid-template-columns:1fr}}
+.kid-col{display:flex;flex-direction:column;min-width:0}
+.kid-colhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;min-height:30px}
+.kid-col textarea{width:100%;height:calc(100vh - 250px);min-height:260px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:13px/1.6 "Yu Gothic UI","Meiryo",monospace;color:var(--ink)}
+#kidEdit{border-color:var(--accent)}
+#kidOrig{background:#f8f9fb;color:var(--sub)}
+.dlg-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line)}
+.fold-h{cursor:pointer;user-select:none}
+.fold-h:hover{color:var(--ink)}
+.fold-h .arw{display:inline-block;width:16px;font-size:10px;color:var(--sub)}
+.fold-h .fold-n{font-weight:400}
+.cr{border:1px solid var(--line);border-left:4px solid var(--info);border-radius:8px;padding:8px 12px;margin:6px 0;background:#fffdf7}
+.cr-ng{color:var(--ng);font-weight:700}
+.cr-ok{color:var(--ok);font-weight:700}
+.pv-n{padding:1px 10px;font-size:12px}
+.pv-n.on{background:var(--accent-weak);border-color:var(--accent);font-weight:700}
+.pv-wrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:8px}
+table.pv{border-collapse:collapse;width:max-content;min-width:100%}
+table.pv th,table.pv td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:4px 8px;font-size:12px;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+table.pv th{position:sticky;top:0;background:#f2f4f7;z-index:1}
+table.pv td.pv-no{color:var(--sub);text-align:right;background:#fafbfc}
+.dl-card{border-color:var(--accent);background:#f7faff}
+.hist-filter{margin-bottom:8px}
+.hist-filter input{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:inherit}
+.hday{border-bottom:1px solid var(--line)}
+.hday-h{display:flex;align-items:center;gap:6px;padding:7px 2px;cursor:pointer;user-select:none}
+.hday-h:hover{background:#fafbfc}
+.hday-h .arw{width:14px;font-size:10px;color:var(--sub)}
+.hday-h .small{margin-left:auto}
+.hday-b{padding:0 0 8px 16px}
+.hday-t{width:36px;flex:none}
+.hday-new{color:var(--info);background:var(--info-weak);border-radius:99px;padding:0 8px}
+.hday-done{color:var(--ok);background:var(--ok-weak);border-radius:99px;padding:0 8px;font-weight:700}
+.hday-clear{margin-top:6px;font-size:12px;padding:2px 10px;color:var(--ng);border-color:#f3c4b6}
+.hday-clear:hover{background:var(--ng-weak);border-color:var(--ng)}
+.folder-btns{display:flex;flex-direction:column;gap:6px}
+.folder-btns button{text-align:left}
+.dl-btn{font-weight:700;padding:6px 14px}
+.dl-ok{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;font-weight:700}
+.dl-path{margin-top:4px;color:var(--ok)}
+.issue-drop{margin-top:8px}
+.cr-title{font-weight:700;color:var(--info)}
+.cr-checkrow{margin-bottom:4px;gap:10px}
+.cr-check{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;cursor:pointer;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.cr-check input{width:16px;height:16px;margin:0;accent-color:var(--ok);cursor:pointer}
+.cr-check.on{border-color:var(--ok);color:var(--ok);background:var(--ok-weak)}
+.cr-info{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--sub);margin-top:2px}
+.cr-info b{color:var(--ink);font-weight:600}
+.cr-sec{margin-top:8px}
+.cr-sec>b{font-size:13px}
+.cr-body{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.6;margin-top:2px}
+.cr-cols{margin:8px 0 0;background:#fff}
+.cr-cols table{margin-top:4px}
+.cr-none{font-size:13px;color:var(--sub);background:#f8f9fb;border:1px dashed var(--line);border-radius:8px;padding:8px 12px}
 .notes tr.kid{cursor:pointer}
 .notes tr.kid:hover td{background:#fafbfc}
 .notes tr.kid.open td{background:var(--accent-weak);border-bottom:none}
@@ -144,7 +210,8 @@ dialog#addDlg::backdrop{background:rgba(29,35,48,.45)}
   <span class="small" style="color:#b8c2d3">Backlogのリスト詳細を1行ずつ確認・自動修正</span>
   <div class="me">あなたの名前 <input type="text" id="me" placeholder="例: 宮下"></div>
 </header>
-<div class="busy" id="busy">処理中…</div>
+<div class="busy" id="busy"><div class="busy-box"><div id="busyMsg">処理中…</div><button id="busyCancel" hidden onclick="cancelBusy()">キャンセル</button></div></div>
+<div class="toast" id="toast" hidden></div>
 <div class="tip" id="tip"></div>
 <div class="wrap">
   <nav class="taskbar">
@@ -162,6 +229,10 @@ dialog#addDlg::backdrop{background:rgba(29,35,48,.45)}
       <h2 style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">メモ：<span id="taskNoteTitle"></span></h2>
       <textarea id="taskNote" placeholder="覚えておくこと（期限・注意点・連絡先など）"></textarea>
       <div class="small" id="noteState">自動で保存されます</div>
+    </div>
+    <div class="card folder-btns">
+      <button onclick="openFolder('download')" title="目検ツール\download（「この添付で目検」でBacklogから落とした添付。日付\課題番号ごと）">📂 Open Download Folder</button>
+      <button onclick="openFolder('output')" title="目検ツール\output（「納品用CSVを出力」したもの。日付\result に納品用CSV、日付\log に修正ログ・除外行）">📂 Open Output Folder</button>
     </div>
   </nav>
   <aside>
@@ -182,13 +253,31 @@ dialog#addDlg::backdrop{background:rgba(29,35,48,.45)}
     </div>
     <div class="card">
       <h2>チェック履歴 <span class="small" id="checksdir"></span></h2>
-      <ul class="list" id="history"></ul>
+      <div class="row hist-filter"><input type="date" id="histDate" title="日付を選ぶと、その日の履歴だけを表示">
+        <button onclick="setHistDate('')" title="日付の指定をやめて全部の日付を表示">すべて</button></div>
+      <div id="history"></div>
     </div>
   </aside>
   <main id="main">
-    <div class="card"><div class="hint">左の「＋ 手動で追加」から課題キーを入れて「取得」するか、CSVを入れてください。タブをクリックしても課題が開きます。ファイル名に【STREAMREQ-xxxxx】が入っていれば課題は自動で紐づきます。</div></div>
+    <div class="card"><div class="hint"><b>今日の課題をまとめて取り込む：</b>チームのセッションの課題一覧の表をまるごとコピーして、左の欄に貼り付けて「まとめて追加」を押してください。課題ごとにタブができます（課題番号・件名・期限が入ります。同じ課題は1回だけ）。<br>タブをクリックするとその課題が開きます。1件だけ開くときは「＋ 手動で追加」から課題キーを入れて「取得」。</div></div>
   </main>
 </div>
+<dialog id="kidDlg">
+  <div class="dlg-head"><b>子課題を編集：<span id="kidTitle"></span></b><button class="dlg-x" onclick="cancelKidEdit()" title="キャンセル（Esc）">✕</button></div>
+  <div class="kid-cols">
+    <div class="kid-col">
+      <div class="kid-colhead"><b>新しい内容（テンプレート）</b>
+        <span class="row"><button onclick="kidCopyOrig()" title="右の今の内容を左にコピーして直す">← 今の内容をコピー</button><button onclick="kidResetTemplate()">テンプレートに戻す</button></span></div>
+      <textarea id="kidEdit" spellcheck="false"></textarea>
+    </div>
+    <div class="kid-col">
+      <div class="kid-colhead"><b>今の内容（読み取り専用）</b><span class="small" id="kidOrigMeta"></span></div>
+      <textarea id="kidOrig" readonly></textarea>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="small">確定すると、子課題の詳細（本文）が左の内容に置き換わります（Backlogの変更履歴には残ります）</span>
+    <span class="row"><button onclick="cancelKidEdit()">キャンセル</button><button class="primary" onclick="saveKidEdit()">確定してBacklogに保存</button></span></div>
+</dialog>
 <dialog id="addDlg">
   <div class="dlg-head"><b>課題・ファイルを追加</b><button class="dlg-x" onclick="closeAddDialog()" title="閉じる（Esc）">✕</button></div>
   <div class="dlg-body">
@@ -464,28 +553,81 @@ async function reprocess() {
   });
 }
 
+let BUSY_CTRL = null;  // 処理中表示の「キャンセル」で止めるため
 async function api(path, opt={}) {
-  const r = await fetch(path, opt);
-  const j = await r.json().catch(() => ({error: "応答を読めませんでした"}));
-  if (!r.ok || j.error) throw new Error(j.error || r.statusText);
-  return j;
+  // opt.timeout(ミリ秒)を過ぎたら打ち切る。処理中表示の「キャンセル」でも打ち切る
+  const ctrl = new AbortController(), outer = opt.signal || BUSY_CTRL?.signal;
+  if (outer) { if (outer.aborted) ctrl.abort(); else outer.addEventListener("abort", () => ctrl.abort(), {once: true}); }
+  let timedOut = false;
+  const tm = opt.timeout ? setTimeout(() => { timedOut = true; ctrl.abort(); }, opt.timeout) : null;
+  try {
+    const r = await fetch(path, {...opt, signal: ctrl.signal});
+    const j = await r.json().catch(() => ({error: "応答を読めませんでした"}));
+    if (!r.ok || j.error) { const e = new Error(j.error || r.statusText); e.status = r.status; throw e; }
+    return j;
+  } catch (e) {
+    if (e.name === "AbortError") { const x = new Error(timedOut ? "時間切れになりました" : "キャンセルしました"); x.timeout = timedOut; x.canceled = !timedOut; throw x; }
+    throw e;
+  } finally { clearTimeout(tm); }
 }
-async function busy(msg, fn) {
-  if (typeof closeAddDialog === "function") closeAddDialog();  // 処理を始めたら追加ウィンドウは閉じる(処理中表示が隠れないように)
-  $("#busy").textContent = msg; $("#busy").classList.add("on");
-  try { return await fn(); } catch(e) { showErr(e.message); } finally { $("#busy").classList.remove("on"); }
+// 待てば通ることが多いエラー: 時間切れ・通信エラー・Backlog混雑(503)・Backlogに繋がらない(504)
+const retryable = e => !e.canceled && (e.timeout || e instanceof TypeError || [503, 504].includes(e.status));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function withRetry(fn, onRetry, tries = 3) {  // 失敗したら 1.5秒→3秒 待って、最大 tries 回まで
+  for (let i = 1; ; i++) {
+    try { return await fn(); }
+    catch (e) { if (i >= tries || !retryable(e)) throw e; onRetry?.(i + 1, tries, e); await sleep(1500 * i); }
+  }
+}
+function busyMsg(msg) { $("#busyMsg").textContent = msg; }
+function cancelBusy() { BUSY_CTRL?.abort(); }
+async function busy(msg, fn, opts = {}) {  // opts.cancel: 「キャンセル」ボタンを出す
+  document.querySelectorAll("dialog[open]").forEach(d => d.close());  // 処理を始めたらウィンドウは閉じる(処理中表示が隠れないように)
+  BUSY_CTRL = new AbortController();
+  busyMsg(msg); $("#busyCancel").hidden = !opts.cancel; $("#busy").classList.add("on");
+  try { return await fn(); } catch(e) { showErr(e.message); } finally { $("#busy").classList.remove("on"); BUSY_CTRL = null; }
+}
+function toast(msg, kind) {  // 右下の小さいお知らせ(画面は止めない)
+  const t = $("#toast"); t.innerHTML = msg; t.className = "toast " + (kind || ""); t.hidden = !msg;
 }
 function showErr(m) { const d = document.createElement("div"); d.className = "err"; d.textContent = m; $("#main").prepend(d); setTimeout(() => d.remove(), 15000); }
 
-async function openIssue(k) {
+let OPEN_SEQ = 0;  // 最後にクリックした課題だけを表示する(前のクリックの応答が後から来ても捨てる)
+const fetchIssue = (key, onRetry) => withRetry(() => api("/api/issue?key=" + encodeURIComponent(key), {timeout: 45000}), onRetry);
+async function openIssue(k, opts = {}) {
   const key = k || $("#key").value.trim();
   if (!key) return;
+  const seq = ++OPEN_SEQ;
+  toast("");
+  // opts.cacheFirst: 前に目検した課題なら、保存済みの内容をすぐ出して、Backlogの最新は裏で取る(画面を止めない)
+  if (opts.cacheFirst) {
+    let c = null;
+    try { c = (await api("/api/check?id=" + encodeURIComponent(key), {timeout: 10000})).check; } catch (e) {}
+    if (seq !== OPEN_SEQ) return;
+    if (c?.issue) {
+      CUR = {issue: c.issue, check: c}; CUSTR = null; touchHistory(c.issue);  // 開いたらチェック履歴に入れる
+      PERIODS = Object.fromEntries((c.options?.periods || []).map(p => [p.col, {start: p.start, end: p.end}]));
+      setOptions(c.options); $("#key").value = key; render(); loadTaskList();
+      toast("保存済みの内容を表示中・Backlogから最新を取得しています…", "info");
+      try {
+        const j = await fetchIssue(key, (n, t) => toast(`Backlogに繋がりにくいので再試行中（${n}/${t}）… 保存済みの内容を表示中`, "info"));
+        if (seq !== OPEN_SEQ || CUR.issue?.key !== j.issue.key) return;
+        CUR.issue = j.issue; if (!CUR.check) CUR.check = j.check; CUSTR = null;  // チェック状態は画面で触っているかもしれないので上書きしない
+        render(); loadTaskList(); toast("");
+      } catch (e) {
+        if (seq === OPEN_SEQ) toast(`Backlogに繋がらないため、保存済みの内容を表示しています（${esc(e.message)}） <a href="#" onclick="openIssue('${esc(key)}', {cacheFirst: true});return false">もう一度取得</a>`, "warn");
+      }
+      return;
+    }
+  }
   await busy("Backlogから取得中…", async () => {
-    const j = await api("/api/issue?key=" + encodeURIComponent(key));
-    CUR = {issue: j.issue, check: j.check};
+    const j = await fetchIssue(key, (n, t) => busyMsg(`Backlogに繋がりにくいので再試行中…（${n}/${t}回目）`));
+    if (seq !== OPEN_SEQ) return;
+    CUR = {issue: j.issue, check: j.check}; CUSTR = null;  // 課題を開き直したら顧客ルールも読み直す
+    touchHistory(j.issue);  // 開いたらチェック履歴に入れる
     $("#key").value = j.issue.key;
     render(); loadTaskList();
-  });
+  }, {cancel: true});
 }
 async function openCheck(id) {
   await busy("読み込み中…", async () => {
@@ -502,9 +644,9 @@ async function processAttachment(id) {
     CUR = {issue: j.check.issue || CUR.issue, check: j.check}; render(); loadSide();
   });
 }
-async function uploadFile(f) {
+async function uploadFile(f, forceKey) {  // forceKey: 添付ファイルの下から入れたときは、その課題として処理
   await busy(`${f.name} を処理中…`, async () => {
-    const key = CUR.issue && !/STREAMREQ-\d+|[A-Z]+-\d+/.test(f.name) ? CUR.issue.key : "";
+    const key = forceKey || (CUR.issue && !/STREAMREQ-\d+|[A-Z]+-\d+/.test(f.name) ? CUR.issue.key : "");
     const j = await api(`/api/upload?name=${encodeURIComponent(f.name)}&key=${encodeURIComponent(key)}&opt=${encodeURIComponent(JSON.stringify(getOptions()))}`, {method:"POST", body: f});
     CUR = {issue: j.check.issue, check: j.check}; render(); loadSide();
   });
@@ -536,7 +678,13 @@ async function postComment() {
     CUR.check = r.check; render(); alert("投稿しました");
   });
 }
-function openFolder(which) { fetch("/api/open_folder?which=" + which); }
+function openFolder(which, sub) { fetch("/api/open_folder?which=" + which + (sub ? "&sub=" + encodeURIComponent(sub) : "")).catch(() => {}); }
+async function deliver() {  // 「納品用CSVを出力」: output\{今日の日付}\result に納品用CSV、log に修正ログ・除外行
+  await busy("output フォルダに出力中…", async () => {
+    const r = await api("/api/deliver", {method: "POST", body: JSON.stringify({id: CUR.check.id})});
+    CUR.check = r.check; render();
+  });
+}
 
 function pill(s) {
   const t = {ok:"OK", ng:"NG", info:"確認", manual:"目視"}[s] || s;
@@ -549,19 +697,24 @@ const OPEN_KIDS = new Set();  // 詳細を開いている子課題
 function toggleKid(key) { OPEN_KIDS.has(key) ? OPEN_KIDS.delete(key) : OPEN_KIDS.add(key); renderTasks(); }
 async function loadTasks(key) {
   TASKS = {loading: true, parent: {key}}; renderTasks();
-  try { TASKS = await api("/api/tasks?key=" + encodeURIComponent(key)); } catch (e) { TASKS = {error: e.message, parent: {key}}; }
-  renderTasks();
+  let res;
+  try {
+    res = await withRetry(() => api("/api/tasks?key=" + encodeURIComponent(key), {timeout: 45000}),
+      (n, t) => { if (TASKS?.parent?.key === key) { TASKS = {loading: true, retry: `${n}/${t}`, parent: {key}}; renderTasks(); } });
+  } catch (e) { res = {error: e.message, parent: {key}}; }
+  if (TASKS?.parent?.key === key) { TASKS = res; renderTasks(); }  // 途中で別の課題を開いたら捨てる
 }
 function renderTasks() {
   const box = $("#tasks"); if (!box) return;
-  if (!TASKS || TASKS.loading) { box.innerHTML = `<span class="small">読み込み中…</span>`; return; }
+  if (!TASKS || TASKS.loading) { box.innerHTML = `<span class="small">読み込み中…${TASKS?.retry ? `（Backlogに繋がりにくいので再試行中 ${TASKS.retry}）` : ""}</span>`; return; }
   if (TASKS.error) { box.innerHTML = `<span class="small">子課題を取得できませんでした（${esc(TASKS.error)}）<a href="#" onclick="loadTasks(CUR.issue.key);return false">再読み込み</a></span>`; return; }
   const t = TASKS, meId = t.me.id;
   const rows = t.children.map(c => { const open = OPEN_KIDS.has(c.key);
     return `<tr class="kid ${open ? "open" : ""}" onclick="toggleKid('${esc(c.key)}')" title="クリックで詳細を${open ? "閉じる" : "表示"}">
     <td style="white-space:nowrap"><span class="arw">${open ? "▼" : "▶"}</span><a href="${esc(c.url)}" target="_blank" onclick="event.stopPropagation()">${esc(c.key)}</a></td><td>${esc(c.type)}</td><td>${esc(c.summary)}</td>
     <td>${esc(c.assignee || "未設定")}</td><td>${esc(c.status)}</td>
-    <td onclick="event.stopPropagation()" style="cursor:default;white-space:nowrap">${c.assignee_id === meId ? `<span class="small">自分の担当</span>` : `<button onclick="assignMe('${esc(c.key)}')">自分の担当にする</button>`}
+    <td onclick="event.stopPropagation()" style="cursor:default;white-space:nowrap"><button onclick="editKid('${esc(c.key)}')" title="詳細（本文）をテンプレートで書き直す">編集</button>
+      ${c.assignee_id === meId ? `<span class="small">自分の担当</span>` : `<button onclick="assignMe('${esc(c.key)}')">自分の担当にする</button>`}
       ${c.summary.startsWith("目検") && !["処理済み", "完了"].includes(c.status) ? `<button class="primary" onclick="setDone('${esc(c.key)}')">処理済みにする</button>` : ""}</td></tr>
     ${open ? `<tr class="kid-detail"><td colspan="6">
       <div class="small">登録: ${esc(c.created_user || "-")} ${esc(c.created || "")} ／ 期限: ${esc(c.due || "-")}</div>
@@ -589,6 +742,45 @@ async function setDone(child) {
     TASKS = r.tasks; renderTasks();
   });
 }
+// ---------------- 子課題の編集（左: テンプレート / 右: 今の内容）→ 確定でBacklogの詳細を上書き
+const kidDlg = $("#kidDlg");
+let KID = null;  // {key, template, orig, start}
+async function editKid(child) {
+  const c = TASKS.children.find(x => x.key === child);
+  let tpl, det;
+  try {
+    [tpl, det] = await Promise.all([api("/api/child_template"), api("/api/child_detail?key=" + encodeURIComponent(child))]);
+  } catch (e) { return showErr("子課題を読み込めませんでした: " + e.message); }
+  KID = {key: child, template: tpl.text, orig: det.description, start: tpl.text};
+  $("#kidTitle").textContent = `${child}　${det.summary || c?.summary || ""}`;
+  $("#kidOrigMeta").textContent = det.updated ? `最終更新 ${det.updated}${det.updated_user ? "（" + det.updated_user + "）" : ""}` : "";
+  $("#kidEdit").value = tpl.text;
+  $("#kidOrig").value = det.description || "（詳細は空です）";
+  kidDlg.showModal(); $("#kidEdit").focus(); $("#kidEdit").setSelectionRange(0, 0); $("#kidEdit").scrollTop = 0;
+}
+function kidCopyOrig() { if (KID) $("#kidEdit").value = KID.orig; }
+function kidResetTemplate() { if (KID && confirm("左の内容をテンプレートに戻しますか？")) $("#kidEdit").value = KID.template; }
+function cancelKidEdit() {
+  if (KID && $("#kidEdit").value !== KID.start && !confirm("編集した内容を破棄して閉じますか？")) return;
+  kidDlg.close(); KID = null;
+}
+kidDlg.addEventListener("cancel", e => { e.preventDefault(); cancelKidEdit(); });  // Esc でも確認してから閉じる
+async function saveKidEdit() {
+  const k = KID; if (!k) return;
+  const text = $("#kidEdit").value;
+  if (!text.trim()) return alert("左の内容が空です");
+  if (!confirm(`${k.key} の詳細（本文）を左の内容で上書きしてBacklogに保存します。
+※課題の関係者に通知される場合があります。
+
+よろしいですか？`)) return;
+  let ok = false;
+  await busy("Backlogに保存中…", async () => {
+    const r = await api("/api/update_child", {method: "POST", body: JSON.stringify({key: TASKS.parent.key, child: k.key, description: text})});
+    TASKS = r.tasks; renderTasks(); ok = true;
+  });
+  if (ok) { KID = null; OPEN_KIDS.add(k.key); renderTasks(); alert(`${k.key} を保存しました`); }
+  else { kidDlg.showModal(); }  // 失敗したら編集内容を残したままウィンドウを開き直す
+}
 async function assignMe(child) {
   const c = TASKS.children.find(x => x.key === child);
   if (!confirm(`${child}「${c.summary}」の担当者を ${c.assignee || "未設定"} → ${TASKS.me.name} に変えます。よろしいですか？`)) return;
@@ -596,6 +788,98 @@ async function assignMe(child) {
     const r = await api("/api/assign_me", {method: "POST", body: JSON.stringify({key: TASKS.parent.key, child})});
     TASKS = r.tasks; renderTasks();
   });
+}
+
+// ---------------- 顧客ルール（顧客ルール.json から、課題の顧客名に合うものを出す）
+let CUSTR = null;  // {customer, matches, ...} 顧客名が変わったら取り直す
+async function loadCustRules(customer) {
+  CUSTR = {customer, loading: true}; renderCustRules();
+  try { CUSTR = {customer, ...(await api("/api/customer_rules?name=" + encodeURIComponent(customer)))}; }
+  catch (e) { CUSTR = {customer, error: e.message}; }
+  renderCustRules();
+}
+const linkify = s => esc(s).replace(/https?:\/\/[^\s<>"）)]+/g, u => `<a href="${u}" target="_blank">${u}</a>`);
+const lines = v => Array.isArray(v) ? v.join("\n") : (v || "");
+async function toggleRulesChecked(on) {
+  const t = TASKLIST.find(x => x.key && x.key === CUR.issue?.key);
+  if (!t) { showErr("この課題のタブが見つかりません（左のタスクに課題を追加してください）"); return renderCustRules(); }
+  if (on && !me.value.trim()) { alert("右上に名前を入れてください"); return renderCustRules(); }
+  await updateTask(t.id, {rules_checked: on, by: me.value.trim()});
+  renderCustRules();
+}
+const CR_OPEN = new Set();  // 開いているカラム表(作り直しても開いたままにする)
+function crToggle(el) { el.open ? CR_OPEN.add(el.dataset.k) : CR_OPEN.delete(el.dataset.k); }
+function renderCustRules() {
+  const box = $("#custRules"); if (!box) return;
+  const c = CUSTR;
+  const tk = TASKLIST.find(x => x.key && x.key === CUR.issue?.key), rc = tk?.rules_checked;  // 顧客ルールを確認したか(タブに保存)
+  if ($("#custRulesCount")) $("#custRulesCount").innerHTML = c && c.matches ? (c.matches.length ? `${c.matches.length}件・${rc ? `<span class="cr-ok">確認済み</span>` : `<span class="cr-ng">未確認</span>`}` : "なし") : "";
+  if (!c || c.loading) { box.innerHTML = `<span class="small">読み込み中…</span>`; return; }
+  if (c.error) { box.innerHTML = `<div class="err">顧客ルールを読めませんでした: ${esc(c.error)}<br>（顧客ルール.json の書き方を確認してください）</div>`; return; }
+  if (!c.customer) { box.innerHTML = `<div class="cr-none">課題に顧客名が入っていないため、顧客ルールを確認できません</div>`; return; }
+  if (!c.matches.length) { box.innerHTML = `<div class="cr-none">この顧客（${esc(c.customer)}）の特定の顧客ルールはありません</div>`; return; }
+  box.innerHTML = `<div class="row cr-checkrow"><label class="cr-check ${rc ? "on" : ""}"><input type="checkbox" ${rc ? "checked" : ""} onchange="toggleRulesChecked(this.checked)"> 顧客ルールを確認した</label>
+    ${rc ? `<span class="small">${esc(rc.by)} ${esc(rc.at)}</span>` : `<span class="small">確認したらチェック</span>`}</div>` + c.matches.map((r, ri) => {
+    const info = [["顧客ID", r["顧客ID"]], ["会社名", r["会社名"]], ["別名", (r["別名"] || []).join(" ／ ") || "なし"], ["状態", r["状態"]], ["最終更新", r["最終更新"]]]
+      .map(([k, v]) => `<span>${k}：<b>${esc(v || "-")}</b></span>`).join("");
+    const head = r["カラム見出し"] || [], rows = r["カラム"] || [];
+    const colsHtml = rows.length
+      ? `<details class="cr-cols" ${CR_OPEN.has(c.customer + "#" + ri) ? "open" : ""} data-k="${esc(c.customer + "#" + ri)}" ontoggle="crToggle(this)"><summary>カラム（${rows.length}列）</summary>
+          ${lines(r["カラムの説明"]) ? `<div class="small" style="white-space:pre-wrap;margin:4px 0">${esc(lines(r["カラムの説明"]))}</div>` : ""}
+          <table class="notes"><tr>${head.map(h => `<th>${esc(h)}</th>`).join("")}</tr>
+          ${rows.map(row => `<tr>${row.map(v => `<td>${linkify(v)}</td>`).join("")}</tr>`).join("")}</table></details>`
+      : (lines(r["カラムの説明"]) ? `<div class="cr-sec"><b>カラム</b><div class="cr-body">${esc(lines(r["カラムの説明"]))}</div></div>` : "");
+    const secs = (r["項目"] || []).map(s => `<div class="cr-sec"><b>${esc(s["見出し"])}</b><div class="cr-body">${linkify(lines(s["内容"]))}</div></div>`).join("");
+    return `<div class="cr">
+      <div class="cr-title">顧客ルール：${esc(r["顧客名"])}</div>
+      <div class="cr-info">${info}</div>
+      ${lines(r["メモ"]) ? `<div class="cr-body small" style="margin-top:6px">${linkify(lines(r["メモ"]))}</div>` : ""}
+      ${colsHtml}${secs}</div>`;
+  }).join("");
+}
+
+// ---------------- 見出しをクリックで畳む（リスト詳細・顧客ルール）。畳んだ状態はブラウザに記憶
+const FOLDED = new Set((() => { try { return JSON.parse(localStorage.getItem("mokken_folded") || "[]"); } catch(e) { return []; } })());
+function foldHead(key, title, count, countId, first) {  // first: カードの一番上の見出し
+  const closed = FOLDED.has(key);
+  return `<h2 class="fold-h" style="margin-top:${first ? 0 : 10}px" onclick="toggleFold('${key}', this)" title="クリックで${closed ? "開く" : "畳む"}">
+    <span class="arw">${closed ? "▶" : "▼"}</span>${title} <span class="small fold-n" ${countId ? `id="${countId}"` : ""}>${esc(count)}</span></h2>`;
+}
+function toggleFold(key, h) {
+  FOLDED.has(key) ? FOLDED.delete(key) : FOLDED.add(key);
+  try { localStorage.setItem("mokken_folded", JSON.stringify([...FOLDED])); } catch(e) {}
+  const closed = FOLDED.has(key);
+  h.nextElementSibling.hidden = closed;  // 見出しのすぐ下の .fold-b
+  h.querySelector(".arw").textContent = closed ? "▶" : "▼";
+  h.title = `クリックで${closed ? "開く" : "畳む"}`;
+}
+
+// ---------------- 納品用CSVのプレビュー（先頭 5/10/20 行）
+let PREV = null, PREV_N = (() => { try { return +localStorage.getItem("mokken_prev_n") || 10; } catch(e) { return 10; } })();
+async function loadPreview() {
+  const chk = CUR.check, key = `${chk.id}|${chk.processed_at}|${PREV_N}`;
+  if (PREV?.key === key) return renderPreview();
+  PREV = {key, loading: true}; renderPreview();
+  let res;
+  try { res = {key, ...(await api(`/api/preview?id=${encodeURIComponent(chk.id)}&n=${PREV_N}`))}; } catch(e) { res = {key, error: e.message}; }
+  if (PREV?.key === key) { PREV = res; renderPreview(); }  // 途中で別の課題に切り替えたら捨てる
+}
+function setPreviewN(n) {
+  PREV_N = n; try { localStorage.setItem("mokken_prev_n", n); } catch(e) {}
+  document.querySelectorAll(".pv-n").forEach(b => b.classList.toggle("on", b.textContent === n + "行"));
+  const cnt = [...document.querySelectorAll("#main h2.fold-h")].find(h => h.textContent.includes("プレビュー"))?.querySelector(".fold-n");
+  if (cnt && CUR.check) cnt.textContent = `先頭${n}行 ／ 全${fmt(CUR.check.report.rows_out)}件`;
+  loadPreview();
+}
+function renderPreview() {
+  const box = $("#csvPreview"); if (!box) return;
+  const p = PREV;
+  if (!p || p.loading) { box.innerHTML = `<span class="small">読み込み中…</span>`; return; }
+  if (p.error) { box.innerHTML = `<div class="err">プレビューを読めませんでした: ${esc(p.error)}</div>`; return; }
+  if (!p.header.length) { box.innerHTML = `<span class="small">（空のファイル）</span>`; return; }
+  box.innerHTML = `<div class="pv-wrap"><table class="pv"><tr><th>#</th>${p.header.map(h => `<th>${esc(h)}</th>`).join("")}</tr>
+    ${p.rows.map((r, i) => `<tr><td class="pv-no">${i + 1}</td>${p.header.map((_, j) => `<td title="${esc(r[j] ?? "")}">${esc(r[j] ?? "")}</td>`).join("")}</tr>`).join("")}</table></div>
+    ${p.rows.length < PREV_N ? `<div class="small" style="margin-top:4px">（全${p.rows.length}件）</div>` : ""}`;
 }
 
 function renderIssue(iss) {
@@ -606,13 +890,20 @@ function renderIssue(iss) {
     <div class="issue-head"><a href="${esc(iss.url)}" target="_blank">${esc(iss.key)}</a><b>${esc(iss.summary)}</b>
       <span class="pill manual">${esc(iss.status)}</span></div>
     <div class="small">顧客: ${esc(iss.customer||"-")} ／ 営業: ${esc(iss.sales||"-")} ／ 担当: ${esc(iss.assignee||"-")} ／ 期限: ${esc(iss.due||"-")} ／ エリア: ${esc(iss.area||"-")}</div>
-    <h2 style="margin-top:10px">リスト詳細</h2>
-    <ul class="details">${(iss.details||[]).map(d => `<li>${esc(d)}</li>`).join("") || "<li class='small'>（記載なし）</li>"}</ul>
-    ${sec["備考"] && sec["備考"] !== "（未入力）" ? `<div class="small">備考: ${esc(sec["備考"])}</div>` : ""}
+    ${foldHead("details", "リスト詳細", `${(iss.details || []).length}行`)}
+    <div class="fold-b" ${FOLDED.has("details") ? "hidden" : ""}>
+      <ul class="details">${(iss.details||[]).map(d => `<li>${esc(d)}</li>`).join("") || "<li class='small'>（記載なし）</li>"}</ul>
+      ${sec["備考"] && sec["備考"] !== "（未入力）" ? `<div class="small">備考: ${esc(sec["備考"])}</div>` : ""}
+    </div>
+    ${foldHead("rules", "顧客ルール", "", "custRulesCount")}
+    <div class="fold-b" ${FOLDED.has("rules") ? "hidden" : ""}><div id="custRules"><span class="small">読み込み中…</span></div></div>
     <h2 style="margin-top:10px">子課題（目検・検品）</h2>
     <div id="tasks"><span class="small">読み込み中…</span></div>
     <h2 style="margin-top:10px">添付ファイル</h2>
-    <ul class="list">${(iss.attachments||[]).map(a => `<li onclick="processAttachment(${a.id})"><span class="t">${esc(a.name)}</span><span class="small">${(a.size/1024/1024).toFixed(1)}MB ${esc(a.created)}</span><button class="primary">この添付で目検</button></li>`).join("") || "<li class='small'>添付なし（「＋ 手動で追加」からCSVを入れてください）</li>"}</ul>
+    <ul class="list">${(iss.attachments||[]).map(a => `<li onclick="processAttachment(${a.id})"><span class="t">${esc(a.name)}</span><span class="small">${(a.size/1024/1024).toFixed(1)}MB ${esc(a.created)}</span><button class="primary">この添付で目検</button></li>`).join("") || "<li class='small'>添付なし（下から手元のCSVを入れてください）</li>"}</ul>
+    <div class="drop small-drop issue-drop" onclick="this.nextElementSibling.click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');if(event.dataTransfer.files[0])uploadFile(event.dataTransfer.files[0], CUR.issue.key)">
+      ＋ 手元のCSVをアップロードして目検<br><span class="small">この課題（${esc(iss.key)}）として処理します。クリックして選択 または ドラッグ&ドロップ</span></div>
+    <input type="file" accept=".csv" hidden onchange="if(this.files[0])uploadFile(this.files[0], CUR.issue.key);this.value=''">
     ${summaryComment ? `<details><summary>作業者の実行サマリ（${esc(summaryComment.user)} ${esc(summaryComment.created)}）</summary><pre>${esc(summaryComment.content)}</pre></details>` : ""}
   </div>`;
 }
@@ -626,6 +917,8 @@ function renderCheck(chk) {
   const nStaff = main.filter(c => st[c.id]?.staff).length;
   const nOwner = main.filter(c => st[c.id]?.owner).length;
   const c = rep.counts || {};
+  // 今の納品用CSVを output\日付\ に保存済みか（作り直したら ✔ は消える）
+  const delivered = chk.delivered && chk.delivered.file === rep.files?.["修正済みCSV"] && chk.delivered.processed_at === chk.processed_at;
   const noteRows = notes.map(it => `<tr><td style="width:56px">${pill(it.status)}</td><td style="white-space:nowrap">${esc(it.title)}</td><td class="small">${esc(it.detail)}</td></tr>`).join("");
   let rows = "", g = null;
   for (const it of main) {
@@ -671,23 +964,34 @@ function renderCheck(chk) {
       <div class="small">${rep.chains.map(([b,n]) => `${esc(b)}（${n}）`).join("、")}</div></details>` : ""}
     ${(rep.removed_reasons||[]).length ? `<ul class="reasons">${rep.removed_reasons.map(([k,v]) => `<li>除外: ${esc(k)} … <b>${fmt(v)}</b>件</li>`).join("")}</ul>` : ""}
     ${rep.options ? `<div class="small" style="margin-top:6px">初期値からOFFにしたルール: ${esc(RULES.filter(r => r.default && rep.options[r.key] === false).map(r => r.label).join("、") || "なし")}</div>` : ""}
-    <div style="margin:12px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fafbfc">
-      <div class="row" style="flex-wrap:wrap"><a class="primary" style="background:var(--accent);color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:700" href="/files/${encodeURIComponent(rep.files?.["修正済みCSV"]||"")}">納品用CSVをダウンロード</a>
-        <span style="font-weight:700">${esc(rep.files?.["修正済みCSV"]||"")}</span></div>
-      <div class="small" style="margin-top:6px">確認用：${rep.files?.["除外行"] ? `<a href="/files/${encodeURIComponent(rep.files["除外行"])}">除外した行</a>（理由付き）` : "除外した行なし"}
-        ／ ${rep.files?.["修正ログ"] ? `<a href="/files/${encodeURIComponent(rep.files["修正ログ"])}">修正ログ</a>（どこを何から何に直したか）` : "修正なし"}
-        ／ <a href="#" onclick="openFolder('output');return false">outputフォルダを開く</a></div></div>
     ${(chk.posted||[]).length ? `<div class="small">Backlog投稿済み: ${chk.posted.map(p => esc(p.at)).join("、")}</div>` : ""}
   </div>
-  <div class="card"><h2>チェックリスト（上から1行ずつ確認してチェック）</h2>${areaNote}
+  <div class="card">${foldHead("checklist", "チェックリスト（上から1行ずつ確認してチェック）", `担当 ${nStaff}/${total}・オーナー ${nOwner}/${total}`, "", true)}
+    <div class="fold-b" ${FOLDED.has("checklist") ? "hidden" : ""}>${areaNote}
     <table><tr><th style="width:56px">自動</th><th>項目</th><th style="text-align:center">担当</th><th style="text-align:center">オーナー</th><th>メモ</th></tr>${rows}</table>
     <details style="margin-top:12px"><summary>備考（自動処理の結果） ${notes.length}項目 … 自動で直す・消すところまで済んでいるもの</summary>
-      <table class="notes">${noteRows}</table></details></div>
+      <table class="notes">${noteRows}</table></details></div></div>
+  <div class="card">${foldHead("preview", "納品用CSVのプレビュー", `先頭${PREV_N}行 ／ 全${fmt(rep.rows_out)}件`, "", true)}
+    <div class="fold-b" ${FOLDED.has("preview") ? "hidden" : ""}>
+      <div class="row small" style="margin-bottom:6px">表示する行数 ${[5, 10, 20].map(n => `<button class="pv-n ${n === PREV_N ? "on" : ""}" onclick="setPreviewN(${n})">${n}行</button>`).join("")}</div>
+      <div id="csvPreview"><span class="small">読み込み中…</span></div></div></div>
   <div class="grid2">
-    <div class="card"><h2>納品用CSVの列（並び・列名・削除）と充足率（🏷＝業種）</h2><div id="colEditor"></div></div>
-    <div class="card"><h2>業種の埋まり具合</h2>${ind || "<div class='small'>業種列なし</div>"}${prefInd}</div>
+    <div class="card">${foldHead("cols", "納品用CSVの列（並び・列名・削除）と充足率（🏷＝業種）", "", "", true)}<div class="fold-b" ${FOLDED.has("cols") ? "hidden" : ""}><div id="colEditor"></div></div></div>
+    <div class="card">${foldHead("industry", "業種の埋まり具合", rep.industry.length ? `${rep.industry.length}列` : "業種列なし", "", true)}
+      <div class="fold-b" ${FOLDED.has("industry") ? "hidden" : ""}>${ind || "<div class='small'>業種列なし</div>"}${prefInd}</div></div>
   </div>
-  <div class="card"><h2>期間系の列（掲載開始日・設立など）の分布</h2><div id="dateCols"></div></div>
+  <div class="card">${foldHead("dates", "期間系の列（掲載開始日・設立など）の分布", "", "", true)}<div class="fold-b" ${FOLDED.has("dates") ? "hidden" : ""}><div id="dateCols"></div></div></div>
+  <div class="card dl-card">
+      <div class="row" style="flex-wrap:wrap"><button class="primary dl-btn" onclick="deliver()" title="output ＞ 今日の日付 ＞ result に納品用CSV、log に修正ログ・除外行を保存します">納品用CSVを出力</button>
+        ${delivered ? `<span class="dl-ok" title="出力済み">✔</span>` : ""}
+        <span style="font-weight:700">${esc(rep.files?.["修正済みCSV"]||"")}</span></div>
+      ${delivered ? `<div class="small dl-path">出力しました（${esc(chk.delivered.at)}） <a href="#" onclick="openFolder(this.dataset.base, this.dataset.sub);return false" data-base="${esc(chk.delivered.base || "output")}" data-sub="${esc(chk.delivered.folder || "")}">フォルダを開く</a>
+        <div>result: ${esc(chk.delivered.path)}</div>
+        ${(chk.delivered.logs || []).map(p => `<div>log: ${esc(p)}</div>`).join("")}</div>` : ""}
+      <div class="small" style="margin-top:6px">確認用：${rep.files?.["除外行"] ? `<a href="/files/${encodeURIComponent(rep.files["除外行"])}">除外した行</a>（理由付き）` : "除外した行なし"}
+        ／ ${rep.files?.["修正ログ"] ? `<a href="/files/${encodeURIComponent(rep.files["修正ログ"])}">修正ログ</a>（どこを何から何に直したか）` : "修正なし"}
+        ／ <a href="/files/${encodeURIComponent(rep.files?.["修正済みCSV"]||"")}">ブラウザでダウンロード</a>
+        ／ <a href="#" onclick="openFolder('output');return false">outputフォルダを開く</a></div></div>
   <div class="card"><h2>自動修正の内容</h2>${samples || "<div class='small'>修正なし</div>"}</div>`;
 }
 
@@ -699,6 +1003,9 @@ function render() {
   $("#main").innerHTML = html || $("#main").innerHTML;
   renderColEditor();
   renderDateCols();
+  if (CUR.check?.report) loadPreview();
+  if (CUR.issue && (!CUSTR || CUSTR.customer !== (CUR.issue.customer || ""))) loadCustRules(CUR.issue.customer || "");
+  else renderCustRules();
   if (CUR.issue && (!TASKS || TASKS.parent?.key !== CUR.issue.key)) loadTasks(CUR.issue.key);
   else renderTasks();
   showCandidates();
@@ -713,13 +1020,21 @@ async function loadTaskList() {
   const key = CUR.issue?.key;  // 課題を開いたら、そのタブを選択(手動で選んだタブは上書きしない)
   if (key && key !== TASK_SYNCED_KEY) { TASK_SYNCED_KEY = key; const t = TASKLIST.find(x => x.key === key); if (t) TASK_SEL = t.id; }
   renderTaskList();
+  renderCustRules();  // 顧客ルールの「確認した」はタブに保存しているので、タブを読み直したら表示も更新
+}
+function dueLabel(t) {  // 期限 10/01（未完了で期限切れは赤・今日は橙）
+  if (!t.due) return "";
+  const today = new Date().toLocaleDateString("sv-SE");  // YYYY-MM-DD
+  const cls = t.done ? "" : t.due < today ? "over" : t.due === today ? "today" : "";
+  const txt = t.due.slice(5).replace("-", "/");
+  return `<span class="small due ${cls}" title="期限 ${esc(t.due)}${cls === "over" ? "（期限切れ）" : cls === "today" ? "（今日）" : ""}">期限 ${esc(txt)}</span>`;
 }
 function renderTaskList() {
   if (TASK_RENAMING) return;
   const shown = TASKLIST.filter(t => TASK_FILTER === "all" || (TASK_FILTER === "done" ? t.done : !t.done));
   $("#taskList").innerHTML = shown.map(t => `<li class="tab ${t.id === TASK_SEL ? "active" : ""} ${t.done ? "done" : ""}" data-id="${esc(t.id)}" onclick="clickTask(this.dataset.id)">
       <input type="checkbox" ${t.done ? "checked" : ""} title="完了にする" onclick="event.stopPropagation()" onchange="updateTask(this.closest('li').dataset.id, {done: this.checked})">
-      <span class="tn"><span class="nm" title="${esc(t.summary || t.name)}（ダブルクリックで名前を変更）" ondblclick="event.stopPropagation();renameTask(this.closest('li').dataset.id)">${esc(t.name)}</span>${t.key ? `<span class="small">${esc(t.key)}</span>` : ""}</span>
+      <span class="tn"><span class="nm" title="${esc(t.summary || t.name)}（ダブルクリックで名前を変更）" ondblclick="event.stopPropagation();renameTask(this.closest('li').dataset.id)">${esc(t.name)}</span>${t.key ? `<span class="small">${esc(t.key)}</span>` : ""}${dueLabel(t)}</span>
       <button class="ic" title="名前を変更" onclick="event.stopPropagation();renameTask(this.closest('li').dataset.id)">✎</button>
       <button class="ic del" title="タブを削除" onclick="event.stopPropagation();deleteTask(this.closest('li').dataset.id)">✕</button></li>`).join("")
     || `<li class="small">${TASKLIST.length ? "該当なし" : "（なし）課題を取得すると追加されます"}</li>`;
@@ -734,11 +1049,12 @@ async function updateTask(id, fields, quiet) {
   try { TASKLIST = (await api("/api/task_update", {method: "POST", body: JSON.stringify({id, ...fields})})).tasks; }
   catch(e) { showErr(e.message); }
   if (!quiet) renderTaskList();
+  if ("done" in fields) api("/api/checks").then(h => { HIST = h.items; renderHistory(); }).catch(() => {});  // 履歴の「未処理 / 処理済」も更新
 }
 function clickTask(id) {
   TASK_SEL = id; renderTaskList();
   const t = findTask(id);
-  if (t?.key && CUR.issue?.key !== t.key) { TASK_SYNCED_KEY = t.key; openIssue(t.key); }
+  if (t?.key && CUR.issue?.key !== t.key) { TASK_SYNCED_KEY = t.key; openIssue(t.key, {cacheFirst: true}); }
 }
 function renameTask(id) {
   const li = [...document.querySelectorAll("#taskList li")].find(x => x.dataset.id === id), t = findTask(id);
@@ -781,7 +1097,8 @@ async function addBulkTasks() {
     const r = await api("/api/task_add_bulk", {method: "POST", body: JSON.stringify({text})});
     TASKLIST = r.tasks;
     const msg = [`${r.added.length}件追加`];
-    if (r.existed.length) msg.push(`${r.existed.length}件は追加済み`);
+    if (r.existed.length) msg.push(`${r.existed.length}件は追加済み（期限を更新）`);
+    if (r.nodue?.length) msg.push(`期限を取得できず: ${r.nodue.join("、")}`);
     if (r.failed.length) msg.push(`追加できず: ${r.failed.map(f => `${f.key}（${f.error}）`).join("、")}`);
     if (!r.added.length && !r.existed.length && !r.failed.length) msg[0] = "課題番号が見つかりませんでした";
     $("#taskAddMsg").textContent = msg.join(" ／ ");
@@ -811,16 +1128,81 @@ $("#taskNote").addEventListener("input", e => {
   noteTimer = setTimeout(async () => { await updateTask(id, {notes: v}, true); $("#noteState").textContent = "保存しました"; }, 600);
 });
 
+// ---------------- チェック履歴（日付ごと。▶で開くとその日の履歴、下の「クリア」でその日の履歴を消す）
+let HIST = [], HIST_DATE = "";
+const HIST_OPEN = new Set();  // 開いている日付（最初は一番新しい日だけ開く）
+let HIST_INIT = false;
+const WD = "日月火水木金土";
+function dayLabel(d) {
+  if (!d) return "日付なし";
+  const [y, m, dd] = d.split("-").map(Number);
+  const today = new Date().toLocaleDateString("sv-SE");
+  return `${y}/${String(m).padStart(2, "0")}/${String(dd).padStart(2, "0")}（${WD[new Date(y, m - 1, dd).getDay()]}）${d === today ? " 今日" : ""}`;
+}
+function renderHistory() {
+  const box = $("#history"); if (!box) return;
+  const groups = new Map();  // 日付 → 履歴（新しい順のまま）
+  for (const x of HIST) { const d = (x.updated || "").slice(0, 10); if (!groups.has(d)) groups.set(d, []); groups.get(d).push(x); }
+  if (!HIST_INIT && groups.size) { HIST_OPEN.add([...groups.keys()][0]); HIST_INIT = true; }
+  let days = [...groups.keys()];
+  if (HIST_DATE) days = days.filter(d => d === HIST_DATE);
+  if (!days.length) { box.innerHTML = `<div class="small" style="padding:4px 0">${HIST_DATE ? `${esc(dayLabel(HIST_DATE))} の履歴はありません` : "（なし）"}</div>`; return; }
+  box.innerHTML = days.map(d => {
+    const items = groups.get(d), open = HIST_DATE ? true : HIST_OPEN.has(d);
+    return `<div class="hday">
+      <div class="hday-h" data-d="${esc(d)}" onclick="toggleHistDay(this.dataset.d)"><span class="arw">${open ? "▼" : "▶"}</span><b>${esc(dayLabel(d))}</b><span class="small">${items.length}件</span></div>
+      <div class="hday-b" ${open ? "" : "hidden"}>
+        <ul class="list">${items.map(x => `<li onclick="openHistItem(this.dataset.id, this.dataset.kind)" data-id="${esc(x.id)}" data-kind="${esc(x.kind || "check")}" title="${esc(x.summary)}">
+          <span class="small hday-t">${esc((x.updated || "").slice(11, 16))}</span>
+          <span class="t"><b>${esc(x.id)}</b> <span class="small">${esc(x.summary || "")}</span></span>
+          ${x.done ? `<span class="small hday-done" title="左のタスクで完了にした課題">処理済</span>` : ""}
+          ${x.kind === "opened" ? (x.done ? "" : `<span class="small hday-new" title="まだ完了にしていない課題（左のタスクのチェックで処理済になる）">未処理</span>`) : `<span class="small">担${x.staff}/${x.total} オ${x.owner}/${x.total}</span>`}</li>`).join("")}</ul>
+        ${d ? `<button class="hday-clear" data-d="${esc(d)}" onclick="clearHistDay(this.dataset.d)">🗑 この日の履歴をクリア（${items.length}件）</button>` : ""}
+      </div></div>`;
+  }).join("");
+}
+function touchHistory(iss) {  // 課題を開いたらチェック履歴に入れて、一覧を読み直す（失敗しても画面は止めない）
+  if (!iss?.key) return;
+  api("/api/history_touch", {method: "POST", body: JSON.stringify({key: iss.key, summary: iss.summary || ""})})
+    .then(() => api("/api/checks")).then(h => { HIST = h.items; renderHistory(); }).catch(() => {});
+}
+function openHistItem(id, kind) {  // 処理したチェックはそのチェックを、開いただけの課題は課題を開く
+  if (kind === "opened") openIssue(id, {cacheFirst: true}); else openCheck(id);
+}
+function toggleHistDay(d) {
+  if (HIST_DATE) return;  // 日付を選んでいるときは開いたまま
+  HIST_OPEN.has(d) ? HIST_OPEN.delete(d) : HIST_OPEN.add(d);
+  renderHistory();
+}
+function setHistDate(d) { HIST_DATE = d; $("#histDate").value = d; renderHistory(); }
+$("#histDate").addEventListener("change", e => setHistDate(e.target.value));
+async function clearHistDay(d) {
+  const items = HIST.filter(x => (x.updated || "").slice(0, 10) === d);
+  if (!items.length) return;
+  const list = items.slice(0, 8).map(x => "・" + x.id + (x.kind === "opened" ? "（未処理）" : "")).join("\n") + (items.length > 8 ? "\n…" : "");
+  const nChecks = items.filter(x => x.kind !== "opened").length;
+  if (!confirm(`${dayLabel(d)} のチェック履歴 ${items.length}件をクリアしますか？\n\n${list}\n\n`
+    + (nChecks ? "処理した課題は、チェック状態（担当・オーナーのチェック、メモ）も一緒に消えます。\n"
+      + "ファイルは checks\\_削除した履歴 に移すだけなので、必要ならそこから戻せます。\n"
+      + "※ checks を共有フォルダにしている場合は、オーナーの画面からも消えます。\n" : "")
+    + "（未処理）の課題は一覧から外すだけです。課題を開くとまた履歴に入ります。")) return;
+  await busy("履歴をクリア中…", async () => {
+    const r = await api("/api/clear_checks", {method: "POST", body: JSON.stringify({date: d})});
+    if (CUR.check && r.moved.includes(CUR.check.id)) { CUR.check = null; render(); }  // 開いていたチェックを消したら画面からも外す
+    HIST = HIST.filter(x => !r.moved.includes(x.id)); renderHistory();
+    toast(`${dayLabel(d)} の履歴 ${r.moved.length}件をクリアしました（checks\\_削除した履歴 に移動）`, "info");
+    setTimeout(() => toast(""), 6000);
+  });
+}
+
 async function loadSide() {
   loadTaskList();
   try {
     const a = await api("/api/inputs");
     $("#inputs").innerHTML = a.files.map(f => `<li title="${esc(f.name)}" onclick="processInput(this.dataset.n)" data-n="${esc(f.name)}"><span class="t">${esc(f.name)}</span><button>処理</button></li>`).join("") || "<li class='small'>（空）</li>";
-    const h = await api("/api/checks");
+    HIST = (await api("/api/checks")).items;
     $("#checksdir").textContent = "";
-    $("#history").innerHTML = h.items.map(x => `<li onclick="openCheck(this.dataset.id)" data-id="${esc(x.id)}" title="${esc(x.summary)}">
-      <span class="t"><b>${esc(x.id)}</b> <span class="small">${esc(x.summary||"")}</span></span>
-      <span class="small">担${x.staff}/${x.total} オ${x.owner}/${x.total}</span></li>`).join("") || "<li class='small'>（なし）</li>";
+    renderHistory();
   } catch(e) {}
 }
 

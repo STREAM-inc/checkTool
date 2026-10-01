@@ -1,10 +1,15 @@
 @echo off
+chcp 932 >nul
 setlocal
-cd /d "%~dp0"
+rem 目検ツール の app.py を起動する（checkTool フォルダに置いたまま使う）
+cd /d "%~dp0目検ツール"
+
 where py >nul 2>nul
 if %errorlevel%==0 (
-    py "%~dp0app.py"
+    py "%~dp0目検ツール\app.py"
 ) else (
-    python "%~dp0app.py"
+    python "%~dp0目検ツール\app.py"
 )
+
+echo.
 pause

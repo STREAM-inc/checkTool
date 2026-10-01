@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 """Backlog API の最小クライアント(標準ライブラリのみ)"""
 import gzip
+import http.client
 import io
 import json
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
 ISSUE_KEY_RE = re.compile(r"[A-Z][A-Z0-9_]+-\d+")
+RETRY_STATUS = {429, 500, 502, 503, 504}  # 少し待てば通ることが多いエラー
 
 
 class Backlog:
@@ -21,26 +24,55 @@ class Backlog:
         q.update(params or {})
         return f"{self.base}{path}?{urllib.parse.urlencode(q, doseq=True)}"
 
-    @staticmethod
-    def _open(req, timeout):
-        """環境のプロキシで失敗したら直接接続でもう一度試す"""
+    # プロキシで失敗したら、以後は(ツールを閉じるまで)最初から直接接続にする。毎回プロキシで待たされないように
+    _direct = False
+    TRIES = 3  # 時間切れ・接続エラー・混雑(429/5xx)のときに試す回数
+
+    @classmethod
+    def _open_once(cls, req, timeout):
+        if not cls._direct:
+            try:
+                return urllib.request.urlopen(req, timeout=timeout).read()
+            except urllib.error.URLError as e:
+                if isinstance(e, urllib.error.HTTPError) or "Proxy" not in str(e.reason) and "Tunnel" not in str(e.reason):
+                    raise
+                cls._direct = True
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         try:
-            return urllib.request.urlopen(req, timeout=timeout).read()
-        except urllib.error.URLError as e:
-            if isinstance(e, urllib.error.HTTPError) or "Proxy" not in str(e.reason) and "Tunnel" not in str(e.reason):
-                raise
-            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
             return opener.open(req, timeout=timeout).read()
+        except urllib.error.URLError as e:
+            if not isinstance(e, urllib.error.HTTPError):
+                cls._direct = False  # 直接接続もだめなら、次はプロキシから試し直す
+            raise
+
+    @classmethod
+    def _open(cls, req, timeout, retry=True):
+        """時間切れ・接続エラー・Backlog混雑(429/5xx)なら少し待って再試行(1秒→2秒)。
+        POST(コメント投稿・課題作成)は二重登録になるので retry=False で呼ぶ"""
+        tries = cls.TRIES if retry else 1
+        for i in range(tries):
+            try:
+                return cls._open_once(req, timeout)
+            except urllib.error.HTTPError as e:
+                if e.code not in RETRY_STATUS or i == tries - 1:
+                    raise
+                err = f"HTTP {e.code}"
+            except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as e:
+                if i == tries - 1:
+                    raise
+                err = str(getattr(e, "reason", e))
+            print(f"Backlog に繋がりにくいので再試行します（{i + 2}/{tries}回目）: {err}")
+            time.sleep(i + 1)
 
     def get(self, path, params=None, raw=False):
-        body = self._open(self._url(path, params), 120 if raw else 20)
+        body = self._open(self._url(path, params), 120 if raw else 12)
         return body if raw else json.loads(body.decode("utf-8"))
 
     def post(self, path, data):
         body = urllib.parse.urlencode(data).encode("utf-8")
         req = urllib.request.Request(self._url(path), data=body, method="POST",
                                      headers={"Content-Type": "application/x-www-form-urlencoded"})
-        return json.loads(self._open(req, 60).decode("utf-8"))
+        return json.loads(self._open(req, 60, retry=False).decode("utf-8"))
 
     def issue(self, key):
         return self.get(f"/issues/{key}")

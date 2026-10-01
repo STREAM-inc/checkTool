@@ -9,6 +9,7 @@ import csv
 import datetime
 import difflib
 import glob
+import json
 import os
 import shutil
 import sys
@@ -24,7 +25,9 @@ INPUT_DIR = os.path.join(SCRIPT_DIR, 'input')
 DONE_DIR = os.path.join(SCRIPT_DIR, 'input_done')
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, 'output')
 CACHE_DIR = os.path.join(SCRIPT_DIR, 'cache')
-CONFIG = os.path.join(SCRIPT_DIR, '設定.txt')
+CONFIG = os.path.join(SCRIPT_DIR, '設定.txt')  # 古い形式(setting.json が無いときだけ使う)
+ROOT = os.path.normpath(os.path.join(SCRIPT_DIR, '..'))  # checkTool フォルダ
+SETTING_JSON = os.path.join(ROOT, 'setting.json')
 DB = os.path.join(CACHE_DIR, 'hellowork_index.sqlite')
 
 # ------------------------------------------------------------ 列の自動判定
@@ -279,23 +282,43 @@ C:\\Users\\1112376\\Desktop\\20260917\\7-タウンワーク\\20260908【0】ハ�
 """
 
 
-def master_paths(log=print):
+def config_lines(log=print):
+    """ハローワークCSVの場所の一覧と、どのファイルから読んだか。
+    checkTool\\setting.json の「採用担当者名寄せ」→「HW_CSV」があればそれを使い(相対パスは checkTool から)、
+    無ければこのフォルダの 設定.txt(古い形式)を読む"""
+    if os.path.isfile(SETTING_JSON):
+        try:
+            with open(SETTING_JSON, encoding='utf-8-sig') as f:
+                sj = json.load(f)
+        except json.JSONDecodeError as e:
+            log('setting.json の書き方が間違っています（%d行目 %d文字目）: %s' % (e.lineno, e.colno, e.msg))
+            log('  Windows のパスは \\ を2つ重ねる（C:\\\\Users\\\\...）か / で書いてください')
+            return [], SETTING_JSON
+        hw = (sj.get('採用担当者名寄せ') or {}).get('HW_CSV')
+        if hw is not None:
+            hw = [hw] if isinstance(hw, str) else hw
+            return [p if os.path.isabs(p) else os.path.normpath(os.path.join(ROOT, p))
+                    for p in (str(x).strip() for x in hw) if p], SETTING_JSON
     if not os.path.exists(CONFIG):
         with open(CONFIG, 'w', encoding='utf-8') as f:
             f.write(DEFAULT_CONFIG)
         log('設定.txt を作成しました。ハローワークCSVの場所を確認してください。')
-    paths = []
     with open(CONFIG, encoding='utf-8-sig') as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            if os.path.isdir(line):
-                paths += sorted(glob.glob(os.path.join(line, '*.csv')))
-            elif os.path.isfile(line):
-                paths.append(line)
-            else:
-                log('※ 設定.txt のパスが見つかりません: %s' % line)
+        lines = [l.strip() for l in f if l.strip() and not l.strip().startswith('#')]
+    return lines, CONFIG
+
+
+def master_paths(log=print):
+    lines, src = config_lines(log)
+    name = os.path.basename(src)
+    paths = []
+    for line in lines:
+        if os.path.isdir(line):
+            paths += sorted(glob.glob(os.path.join(line, '*.csv')))
+        elif os.path.isfile(line):
+            paths.append(line)
+        else:
+            log('※ %s のパスが見つかりません: %s' % (name, line))
     return sorted(set(paths))
 
 
@@ -315,7 +338,7 @@ def main():
 
     masters = master_paths()
     if not masters:
-        print('ハローワークCSVが設定されていません。設定.txt を確認してください。')
+        print('ハローワークCSVが設定されていません。checkTool の setting.json（「採用担当者名寄せ」の HW_CSV）を確認してください。')
         return 1
     print('ハローワークデータ:')
     for m in masters:

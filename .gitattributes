@@ -1,0 +1,2 @@
+# .bat は Windows の cmd で動かすので、どこで取得しても改行は CRLF にする（中身は Shift-JIS）
+*.bat text eol=crlf
