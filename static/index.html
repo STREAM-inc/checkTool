@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>目検ツール</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f6f7f9;--card:#fff;--ink:#1d2330;--sub:#667085;--line:#e4e7ec;--accent:#2f6fed;--accent-weak:#e8f0ff;
+  --ok:#12805c;--ok-weak:#e3f5ed;--ng:#c4320a;--ng-weak:#fdeee8;--info:#946200;--info-weak:#fdf5e1;--man:#475467;--man-weak:#eef1f5;
+  --bar:#2f6fed;--bar-ind:#d97706;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 "Yu Gothic UI","Meiryo",system-ui,sans-serif}
+header{background:#1d2330;color:#fff;padding:10px 20px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:5}
+header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.05em}
+header .me{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:13px}
+header input{width:130px}
+.wrap{display:grid;grid-template-columns:230px 320px minmax(0,1fr);gap:16px;padding:16px;max-width:1900px;margin:0 auto}
+@media(max-width:1300px){.wrap{grid-template-columns:220px minmax(0,1fr)}.taskbar{grid-row:1/span 2}
+  .wrap>main{grid-column:2;grid-row:1}.wrap>aside{grid-column:2;grid-row:2}}  /* 課題・結果を処理ルールより上に */
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.taskbar,.wrap>main,.wrap>aside{grid-column:auto;grid-row:auto}}
+.taskbar{position:sticky;top:60px;align-self:start;max-height:calc(100vh - 76px);overflow:auto}
+@media(max-width:900px){.taskbar{position:static;max-height:none}}
+.tfilter{display:flex;gap:4px;margin-bottom:8px}
+.tfilter button{flex:1;padding:2px 0;font-size:12px}
+.tfilter button.on{background:var(--accent-weak);border-color:var(--accent)}
+.tasklist{list-style:none;margin:0 0 8px;padding:0}
+.tasklist li.tab{display:flex;gap:6px;align-items:center;padding:6px;border:1px solid transparent;border-radius:6px;cursor:pointer;margin-bottom:2px}
+.tasklist li.tab:hover{background:#fafbfc;border-color:var(--line)}
+.tasklist li.tab.active{background:var(--accent-weak);border-color:var(--accent)}
+.tasklist input[type=checkbox]{width:16px;height:16px;flex:none;margin:0;cursor:pointer;accent-color:var(--ok)}
+.tasklist .tn{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.tasklist .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tasklist .tn .small{white-space:nowrap}
+.tasklist li.done .nm{text-decoration:line-through;color:var(--sub)}
+.tasklist .ic{border:none;background:none;padding:0 2px;color:var(--sub);display:none}
+.tasklist li:hover .ic,.tasklist li.active .ic{display:inline}
+.tasklist .ic:hover{color:var(--accent)}
+.tasklist .ic.del:hover{color:var(--ng)}
+.tasklist .rn-task{width:100%;padding:2px 4px}
+#taskKeys{width:100%;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:inherit;font-size:12px;color:inherit}
+#taskNote{width:100%;min-height:160px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;color:inherit}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.card h2{font-size:14px;margin:0 0 10px;color:var(--sub);font-weight:700}
+input[type=text]{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;color:inherit;background:#fff}
+button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center}
+.drop{border:2px dashed #b8c2d3;border-radius:10px;padding:18px;text-align:center;color:var(--sub);cursor:pointer}
+.drop.over{background:var(--accent-weak);border-color:var(--accent)}
+.list{list-style:none;margin:0;padding:0}
+.list li{padding:7px 4px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;cursor:pointer}
+.list li:hover{background:#fafbfc}
+.list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.small{font-size:12px;color:var(--sub)}
+.pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--ok-weak);color:var(--ok)}.pill.ng{background:var(--ng-weak);color:var(--ng)}
+.pill.info{background:var(--info-weak);color:var(--info)}.pill.manual{background:var(--man-weak);color:var(--man)}
+.kpis{display:flex;gap:12px;flex-wrap:wrap}
+.kpi{flex:1;min-width:130px;border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.kpi b{display:block;font-size:22px}
+.issue-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.issue-head a{font-weight:700;color:var(--accent);text-decoration:none}
+.details li{margin:4px 0}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--sub);font-weight:600;background:#fafbfc}
+td.chk{text-align:center;width:120px}
+td.chk label{display:flex;flex-direction:column;align-items:center;cursor:pointer;gap:2px}
+td.chk input{width:20px;height:20px;cursor:pointer}
+tr.group td{background:#f2f4f7;font-weight:700;font-size:12px;color:var(--sub)}
+tr.done-both td{background:#f3fbf7}
+.memo{width:100%;min-width:120px}
+.bar{position:relative;height:16px;background:#eef1f5;border-radius:4px;overflow:hidden;min-width:120px}
+.bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--bar)}
+.bar.ind>i{background:var(--bar-ind)}
+.cols td{padding:4px 6px}
+.cols .name{white-space:nowrap}
+.progress{height:8px;background:#eef1f5;border-radius:99px;overflow:hidden;display:flex}
+.progress i{display:block;height:100%}
+details{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}
+summary{cursor:pointer;font-weight:600}
+pre{white-space:pre-wrap;font:12px/1.5 Consolas,monospace;background:#f8f9fb;padding:10px;border-radius:6px;max-height:420px;overflow:auto}
+.samples td{font-size:12px}
+.busy{position:fixed;inset:0;background:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;z-index:20;font-size:16px;font-weight:700}
+.busy.on{display:flex}
+.hint{background:var(--info-weak);color:var(--info);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:10px}
+.err{background:var(--ng-weak);color:var(--ng);padding:8px 12px;border-radius:8px;margin-bottom:10px;white-space:pre-wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1200px){.grid2{grid-template-columns:1fr}}
+.dl a{margin-right:12px;color:var(--accent)}
+.rules label{display:flex;gap:6px;align-items:flex-start;padding:2px 0;font-size:13px;cursor:pointer}
+.rules label input{margin-top:4px}
+.rules .kind{font-size:11px;color:var(--sub);font-weight:700;margin-top:6px}
+.small-drop{padding:10px;font-size:13px}
+.reasons{margin:8px 0 0;padding-left:18px;font-size:13px}
+.dcol{border-top:1px solid var(--line);padding:12px 0}
+.dcol:first-child{border-top:none;padding-top:0}
+.dstats{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:4px 0 8px}
+.dstats b{font-size:15px}
+.hist{position:relative;display:flex;align-items:flex-end;gap:2px;height:140px;border-bottom:1px solid #c9ced6;padding-top:6px}
+.hist .b{flex:1;min-width:2px;border-radius:4px 4px 0 0;background:var(--accent);position:relative}
+.hist .b.out{background:#c3c8d0}
+.hist .hit{position:absolute;inset:-6px -1px 0 -1px}
+.hist .b:hover{filter:brightness(.85)}
+.haxis{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:3px}
+.tip{position:fixed;pointer-events:none;background:#1d2330;color:#fff;font-size:12px;padding:4px 8px;border-radius:4px;z-index:30;display:none;white-space:nowrap}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--sub);align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.prange{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;margin-top:8px}
+.prange input{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit}
+.notes td{font-size:13px;padding:5px 6px}
+dialog#addDlg{border:none;border-radius:12px;padding:0;width:min(560px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25);color:var(--ink)}
+dialog#addDlg::backdrop{background:rgba(29,35,48,.45)}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlg-x{border:none;background:none;font-size:16px;color:var(--sub);padding:2px 6px}
+.dlg-x:hover{color:var(--ink)}
+.dlg-body{padding:14px 16px 2px;max-height:calc(100vh - 140px);overflow:auto}
+.dlg-body .card{border:none;padding:0}
+.notes tr.kid{cursor:pointer}
+.notes tr.kid:hover td{background:#fafbfc}
+.notes tr.kid.open td{background:var(--accent-weak);border-bottom:none}
+.notes .arw{display:inline-block;width:14px;color:var(--sub);font-size:10px}
+.notes tr.kid-detail td{background:#fbfcfe;padding:4px 10px 8px 26px}
+.kd-body{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.6;border-left:3px solid var(--accent);background:#fff;padding:6px 10px;margin-top:4px;max-height:480px;overflow:auto}
+.kd-close{display:block;margin:6px auto 0;font-size:12px;padding:1px 16px;color:var(--sub)}
+.collist{list-style:none;margin:0;padding:0}
+.collist li{display:flex;align-items:center;gap:8px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;margin:3px 0;background:#fff;cursor:grab}
+.collist li.off{opacity:.45}
+.collist li.dragover{border-color:var(--accent);background:var(--accent-weak)}
+.collist .h{color:var(--sub);cursor:grab;user-select:none}
+.collist .nm{width:170px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.collist .bar{flex:1}
+.collist .pc{width:52px;text-align:right;font-size:12px}
+.collist button{padding:0 6px}
+.collist .rn{width:170px;flex:none;padding:2px 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>目検ツール</h1>
+  <span class="small" style="color:#b8c2d3">Backlogのリスト詳細を1行ずつ確認・自動修正</span>
+  <div class="me">あなたの名前 <input type="text" id="me" placeholder="例: 宮下"></div>
+</header>
+<div class="busy" id="busy">処理中…</div>
+<div class="tip" id="tip"></div>
+<div class="wrap">
+  <nav class="taskbar">
+    <div class="card">
+      <h2>タスク <span class="small" id="taskCount"></span></h2>
+      <div class="tfilter"><button data-f="all" class="on">すべて</button><button data-f="open">未完了</button><button data-f="done">完了</button></div>
+      <ul class="tasklist" id="taskList"></ul>
+      <textarea id="taskKeys" rows="2" placeholder="18161 18163 … または今日の課題一覧を貼り付け"></textarea>
+      <button class="primary" onclick="addBulkTasks()" style="width:100%;margin:4px 0 2px" title="Ctrl+Enterでも追加">まとめて追加</button>
+      <div class="small" id="taskAddMsg"></div>
+      <div class="row" style="margin-top:6px"><button onclick="addManualTask()" style="flex:1">＋ 手動で追加</button><button onclick="clearTasks()" title="タブを全部消す">全部クリア</button></div>
+      <p class="small" style="margin:6px 0 0">課題を取得すると自動でタブが増えます。名前はダブルクリックで変更</p>
+    </div>
+    <div class="card" id="taskNoteCard" hidden>
+      <h2 style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">メモ：<span id="taskNoteTitle"></span></h2>
+      <textarea id="taskNote" placeholder="覚えておくこと（期限・注意点・連絡先など）"></textarea>
+      <div class="small" id="noteState">自動で保存されます</div>
+    </div>
+  </nav>
+  <aside>
+    <div class="card">
+      <h2>処理ルール</h2>
+      <div id="rules" class="rules"></div>
+      <h2 style="margin-top:12px">除外リスト（既存顧客・NGリスト等）</h2>
+      <div class="drop small-drop" id="exdrop">除外したい企業のCSV/Excelをドロップ<br><span class="small">TEL・名称の列を自動で見つけて照合</span></div>
+      <input type="file" id="exfile" accept=".csv,.xlsx,.xlsm" hidden multiple>
+      <div class="small" style="margin:6px 0 2px">照合キー:
+        <label><input type="checkbox" class="exkey" value="tel" checked>TEL</label>
+        <label title="法人格込みの名称が同じで、市区町村も同じなら一致（住所列が無いリストは都道府県で比較）"><input type="checkbox" class="exkey" value="name_city">名称+市区町村</label>
+        <label title="同名の別会社も消えるので注意"><input type="checkbox" class="exkey" value="name">名称のみ</label></div>
+      <ul class="list" id="excludes"></ul>
+      <h2 style="margin-top:12px">列の並び（新しく処理するとき）</h2>
+      <select id="colPresetNew" style="width:100%"><option value="">元のファイルの並び</option></select>
+      <p class="small" style="margin:6px 0 0">※ルールを変えたら、結果画面の「このルールで再処理」を押す</p>
+    </div>
+    <div class="card">
+      <h2>チェック履歴 <span class="small" id="checksdir"></span></h2>
+      <ul class="list" id="history"></ul>
+    </div>
+  </aside>
+  <main id="main">
+    <div class="card"><div class="hint">左の「＋ 手動で追加」から課題キーを入れて「取得」するか、CSVを入れてください。タブをクリックしても課題が開きます。ファイル名に【STREAMREQ-xxxxx】が入っていれば課題は自動で紐づきます。</div></div>
+  </main>
+</div>
+<dialog id="addDlg">
+  <div class="dlg-head"><b>課題・ファイルを追加</b><button class="dlg-x" onclick="closeAddDialog()" title="閉じる（Esc）">✕</button></div>
+  <div class="dlg-body">
+    <div class="card">
+      <h2>① Backlog課題を開く</h2>
+      <div class="row"><input type="text" id="key" placeholder="18016 / STREAMREQ-18016 / URL" style="flex:1"><button class="primary" onclick="openIssue()">取得</button></div>
+    </div>
+    <div class="card">
+      <h2>② ファイルを入れる</h2>
+      <div class="drop" id="drop">CSVをここにドラッグ&ドロップ<br><span class="small">またはクリックして選択</span></div>
+      <input type="file" id="file" accept=".csv" hidden>
+      <p class="small" style="margin:8px 0 4px">input フォルダのファイル <a href="#" onclick="openFolder('input');return false">フォルダを開く</a></p>
+      <ul class="list" id="inputs"></ul>
+    </div>
+    <div class="card">
+      <h2>Backlogに無いタスクを追加</h2>
+      <div class="row"><input type="text" id="manualName" placeholder="タスク名" style="flex:1"><button onclick="addNamedTask()">タブに追加</button></div>
+    </div>
+  </div>
+</dialog>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Number(n).toLocaleString();
+let CUR = {issue:null, check:null};
+
+const me = $("#me");
+try { me.value = localStorage.getItem("mokken_me") || ""; } catch(e) {}
+me.addEventListener("change", () => { try { localStorage.setItem("mokken_me", me.value); } catch(e) {} });
+
+let RULES = [];
+function loadOpts() { try { return JSON.parse(localStorage.getItem("mokken_opts") || "{}"); } catch(e) { return {}; } }
+const OPTS_VER = 5;  // ルールの初期値を変えたら上げる(古い保存値を捨てる)
+function saveOpts() { try { localStorage.setItem("mokken_opts", JSON.stringify({...getOptions(), v: OPTS_VER})); } catch(e) {} }
+function getOptions() {
+  const o = {};
+  document.querySelectorAll(".rule").forEach(c => o[c.value] = c.checked);
+  o.exclude_keys = [...document.querySelectorAll(".exkey:checked")].map(c => c.value);
+  o.exclude_files = [...document.querySelectorAll(".exuse:checked")].map(c => c.value);
+  if ($("#chainMin")) o.chain_min = +$("#chainMin").value || 0;
+  o.group_off = [...document.querySelectorAll(".grp")].filter(c => !c.checked).map(c => c.value);
+  o.tel_col = $("#telCol")?.value || "";
+  o.addr_col = $("#addrCol")?.value || "";
+  const pn = $("#colPresetNew")?.value;
+  o.column_preset = pn || "";
+  if (pn && PRESETS[pn]) o.columns = PRESETS[pn];
+  return o;
+}
+let PRESETS = {}, COLCONF = null, COLCONF_ID = null;
+async function loadPresets() {
+  PRESETS = (await api("/api/presets")).presets;
+  const sel = $("#colPresetNew"), cur = loadOpts().column_preset || sel.value;
+  sel.innerHTML = `<option value="">元のファイルの並び</option>` + Object.keys(PRESETS).map(n => `<option ${n === cur ? "selected" : ""}>${esc(n)}</option>`).join("");
+  sel.onchange = saveOpts;
+  if (CUR.check) renderColEditor();
+}
+function colConf() {
+  const chk = CUR.check;
+  if (COLCONF_ID !== chk.id + chk.processed_at) { COLCONF = JSON.parse(JSON.stringify(chk.report.column_config || chk.report.columns.map(c => ({name: c.name, on: true})))); COLCONF_ID = chk.id + chk.processed_at; }
+  return COLCONF;
+}
+function renderColEditor() {
+  const box = $("#colEditor"); if (!box || !CUR.check) return;
+  const conf = colConf(), stats = CUR.check.report.column_stats || {};
+  box.innerHTML = `<div class="row" style="flex-wrap:wrap;margin-bottom:8px">
+      <select id="colPreset"><option value="">プリセットを選ぶ…</option>${Object.keys(PRESETS).map(n => `<option>${esc(n)}</option>`).join("")}</select>
+      <button onclick="applyPreset($('#colPreset').value)">適用</button>
+      <button onclick="savePreset()">今の並びをプリセット保存</button>
+      <button onclick="deletePreset($('#colPreset').value)">プリセット削除</button>
+    </div>
+    <ul class="collist" id="colList">${conf.map((c, i) => { if (!c.on) return ""; const s = stats[c.name] || {pct: 0, filled: 0, industry: /業種/.test(c.name)};
+      return `<li draggable="true" data-i="${i}"><span class="h">☰</span>
+        <input type="text" class="rn" value="${esc(c.rename || c.name)}" title="列名（書き換えると出力時の列名が変わる）" onchange="renameCol(${i}, this.value)" onmousedown="event.stopPropagation()">
+        <span class="small" style="width:90px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="元の列名">${c.rename && c.rename !== c.name ? "元: " + esc(c.name) : (s.industry ? "🏷 業種" : "")}</span>
+        <div class="bar ${s.industry ? "ind" : ""}"><i style="width:${s.pct}%"></i></div><span class="pc">${s.pct}%</span>
+        <button onclick="moveCol(${i},-1)" title="上へ">↑</button><button onclick="moveCol(${i},1)" title="下へ">↓</button>
+        <button onclick="COLCONF[${i}].on=false;renderColEditor()" title="この列を削除（出力しない）">削除</button></li>`; }).join("")}</ul>
+    ${conf.some(c => !c.on) ? `<div class="small" style="margin-top:8px">削除した列（出力しない）:</div><ul class="collist">${conf.map((c, i) => c.on ? "" :
+      `<li class="off"><span class="nm">${esc(c.rename || c.name)}</span><span class="pc">${(stats[c.name]||{pct:0}).pct}%</span><button onclick="COLCONF[${i}].on=true;renderColEditor()">戻す</button></li>`).join("")}</ul>` : ""}
+    <div class="row" style="margin-top:10px"><button class="primary" onclick="reprocess()">列の変更を納品用CSVに反映</button>
+      <button onclick="COLCONF=[];reprocess()">元のファイルの列に戻す</button>
+      <span class="small">並べ替え（☰をドラッグ or ↑↓）・列名の書き換え・「削除」をしたら、左のボタンで納品用CSVに反映されます</span></div>`;
+  let from = null;
+  box.querySelectorAll("#colList li").forEach(li => {
+    li.addEventListener("dragstart", e => { from = +li.dataset.i; e.dataTransfer.effectAllowed = "move"; });
+    li.addEventListener("dragover", e => { e.preventDefault(); li.classList.add("dragover"); });
+    li.addEventListener("dragleave", () => li.classList.remove("dragover"));
+    li.addEventListener("drop", e => { e.preventDefault(); const to = +li.dataset.i; if (from === null || from === to) return;
+      const [m] = COLCONF.splice(from, 1); COLCONF.splice(to, 0, m); renderColEditor(); });
+  });
+}
+// ---------------- 期間系の列
+let PERIODS = {};  // 列名 → {start:"YYYY-MM", end:"YYYY-MM"}（画面で入れた期間）
+const ymNum = s => { const m = /^(\d{4})-(\d{2})$/.exec(s || ""); return m ? +m[1] * 12 + (+m[2] - 1) : null; };
+function inRange(key, p) {  // key "YYYY-MM"（月不明は "YYYY-00"）
+  const y = +key.slice(0, 4), mo = +key.slice(5, 7);
+  const lo = ymNum(p.start), hi = ymNum(p.end);
+  const a = y * 12 + (mo ? mo - 1 : 11), b = y * 12 + (mo ? mo - 1 : 0);  // 月不明は年で判定
+  return (lo === null || a >= lo) && (hi === null || b <= hi);
+}
+function renderDateCols() {
+  const box = $("#dateCols"); if (!box || !CUR.check) return;
+  const cols = CUR.check.report.date_cols || [];
+  if (!cols.length) { box.innerHTML = "<div class='small'>期間系の列はありません（列名に「日」「設立」「開業」「掲載開始」などを含み、年月が入っている列を自動で拾います）</div>"; return; }
+  box.innerHTML = cols.map((c, ci) => {
+    const p = PERIODS[c.name] || (c.req ? {start: c.req.start, end: c.req.end} : {start: "", end: ""});
+    const keys = Object.keys(c.months); const parsed = keys.reduce((s, k) => s + c.months[k], 0);
+    if (!parsed) return `<div class="dcol"><b>${esc(c.name)}</b><div class="small">入力 ${fmt(c.filled)}/${fmt(c.rows)}件。年月として読める値がありません</div></div>`;
+    const withM = keys.filter(k => !k.endsWith("-00")).sort();
+    const first = keys.slice().sort()[0], last = keys.slice().sort().slice(-1)[0];
+    const span = withM.length ? ymNum(withM[withM.length - 1]) - ymNum(withM[0]) : 999;
+    const byMonth = withM.length && span <= 36;
+    // 棒の範囲: 両端1%の外れ値は端の棒にまとめる。月単位(3年以内) / 年単位 / 5年単位(60年超)
+    const sortedK = keys.slice().sort(); const tot = parsed; let cum = 0, loK = sortedK[0], hiK = sortedK[sortedK.length - 1];
+    for (const k of sortedK) { cum += c.months[k]; if (cum >= tot * 0.01) { loK = k; break; } }
+    cum = 0; for (const k of sortedK.slice().reverse()) { cum += c.months[k]; if (cum >= tot * 0.01) { hiK = k; break; } }
+    const y0 = +loK.slice(0, 4); let y1 = +hiK.slice(0, 4);
+    const unit = byMonth ? "月" : (y1 - y0 > 60 ? "5年" : "年");
+    if (unit === "5年") y1 = y0 + Math.ceil((y1 - y0 + 1) / 5) * 5 - 1;  // 最後の棒を5年ぶんに揃える
+    const binOf = k => {
+      const y = +k.slice(0, 4);
+      if (y < y0) return "lo"; if (y > y1) return "hi";
+      if (unit === "月") return k.endsWith("-00") ? null : k;
+      if (unit === "5年") return String(y0 + Math.floor((y - y0) / 5) * 5);
+      return String(y);
+    };
+    const bins = new Map();
+    if (keys.some(k => +k.slice(0, 4) < y0)) bins.set("lo", {n: 0, inn: 0});
+    if (unit === "月") { for (let t = ymNum(withM[0]); t <= ymNum(withM[withM.length - 1]); t++) bins.set(`${Math.floor(t / 12)}-${String(t % 12 + 1).padStart(2, "0")}`, {n: 0, inn: 0}); }
+    else { for (let y = y0; y <= y1; y += unit === "5年" ? 5 : 1) bins.set(String(y), {n: 0, inn: 0}); }
+    if (keys.some(k => +k.slice(0, 4) > y1)) bins.set("hi", {n: 0, inn: 0});
+    let inn = 0, out = 0;
+    const hasP = p.start || p.end;
+    for (const k of keys) {
+      const v = c.months[k]; const ok = !hasP || inRange(k, p);
+      ok ? inn += v : out += v;
+      const bk = binOf(k);
+      if (bk && bins.has(bk)) { const b = bins.get(bk); b.n += v; if (ok) b.inn += v; }
+    }
+    const max = Math.max(...[...bins.values()].map(b => b.n), 1);
+    const sorted = keys.slice().sort(); let acc = 0, med = "";
+    for (const k of sorted) { acc += c.months[k]; if (acc >= parsed / 2) { med = k; break; } }
+    const lab = k => k.endsWith("-00") ? `${k.slice(0, 4)}年` : `${k.slice(0, 4)}年${+k.slice(5, 7)}月`;
+    const bars = [...bins.entries()].map(([k, b]) => {
+      const h = b.n ? Math.max(2, b.n / max * 100) : 0;
+      const cls = hasP && b.inn < b.n / 2 ? "b out" : "b";
+      const name = k === "lo" ? `${y0 - 1}年以前` : k === "hi" ? `${y1 + 1}年以降` : unit === "月" ? lab(k) : unit === "5年" ? `${k}〜${+k + 4}年` : `${k}年`;
+      return `<div class="${cls}" style="height:${h}%" data-tip="${esc(name)}：${fmt(b.n)}件${hasP ? `（期間内 ${fmt(b.inn)}）` : ""}"><div class="hit"></div></div>`;
+    }).join("");
+    const bk = [...bins.keys()];
+    const axl = k => k === "lo" ? `〜${y0 - 1}年` : k === "hi" ? `${y1 + 1}年〜` : unit === "月" ? lab(k) : k + "年";
+    const axis = [bk[0], bk[Math.floor(bk.length / 2)], bk[bk.length - 1]].map(axl);
+    const blank = c.rows - c.filled;
+    return `<div class="dcol">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>${esc(c.name)}</b>
+        <div class="legend">${hasP ? `<span><i style="background:var(--accent)"></i>期間内</span><span><i style="background:#c3c8d0"></i>期間外</span>` : ""}<span>${unit}ごとの件数（棒にマウスを乗せると件数）</span></div></div>
+      <div class="dstats">
+        <span>最も古い <b>${lab(first)}</b></span><span>最も新しい <b>${lab(last)}</b></span><span>中央 <b>${lab(med)}</b></span>
+        <span>入力 <b>${fmt(c.filled)}</b>/${fmt(c.rows)}件（${(c.filled / c.rows * 100).toFixed(1)}%）</span>
+        ${c.unparsed ? `<span>読めない値 <b>${fmt(c.unparsed)}</b>件</span>` : ""}</div>
+      <div class="hist">${bars}</div><div class="haxis"><span>${axis[0]}</span><span>${axis[1]}</span><span>${axis[2]}</span></div>
+      <div class="prange">期間 <input type="month" value="${esc(p.start)}" onchange="setPeriod(${ci},'start',this.value)"> ～ <input type="month" value="${esc(p.end)}" onchange="setPeriod(${ci},'end',this.value)">
+        ${c.req && !PERIODS[c.name] ? `<span class="small">（リスト詳細「${esc(c.req.from)}」から）</span>` : ""}
+        ${hasP ? `<span>期間内 <b>${fmt(inn)}</b> ／ 期間外 <b style="color:var(--ng)">${fmt(out)}</b> ／ 空欄 <b>${fmt(blank)}</b>件</span>
+          <button class="primary" onclick="applyPeriods()">期間外を除外して作り直す</button>` : `<span class="small">期間を入れると、期間内・期間外の件数がすぐ出ます</span>`}</div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".hist .b").forEach(b => {
+    b.addEventListener("mousemove", e => { const t = $("#tip"); t.textContent = b.dataset.tip; t.style.display = "block"; t.style.left = (e.clientX + 12) + "px"; t.style.top = (e.clientY - 28) + "px"; });
+    b.addEventListener("mouseleave", () => { $("#tip").style.display = "none"; });
+  });
+}
+function setPeriod(ci, which, v) {
+  const c = CUR.check.report.date_cols[ci];
+  const p = PERIODS[c.name] || (c.req ? {start: c.req.start, end: c.req.end} : {start: "", end: ""});
+  PERIODS[c.name] = {...p, [which]: v}; renderDateCols();
+}
+async function applyPeriods() {
+  const rule = document.querySelector('.rule[value="period_out"]'); if (rule) rule.checked = true;
+  await reprocess();
+}
+function renameCol(i, v) { v = v.trim(); COLCONF[i].rename = v && v !== COLCONF[i].name ? v : undefined; renderColEditor(); }
+function moveCol(i, d) {  // 削除した列は飛ばして、表示中の隣の列と入れ替える
+  let j = i + d; while (j >= 0 && j < COLCONF.length && !COLCONF[j].on) j += d;
+  if (j < 0 || j >= COLCONF.length) return; [COLCONF[i], COLCONF[j]] = [COLCONF[j], COLCONF[i]]; renderColEditor(); }
+function applyPreset(name) {
+  if (!name || !PRESETS[name]) return;
+  const names = COLCONF.map(c => c.name), out = [];
+  for (const p of PRESETS[name]) if (names.includes(p.name)) out.push({name: p.name, on: p.on !== false, rename: p.rename});
+  for (const c of COLCONF) if (!out.find(o => o.name === c.name)) out.push({name: c.name, on: true});
+  COLCONF = out; renderColEditor();
+}
+async function savePreset() {
+  const name = prompt("プリセット名（例: ファインズ納品形式）"); if (!name) return;
+  PRESETS = (await api("/api/presets", {method:"POST", body: JSON.stringify({name, columns: COLCONF})})).presets;
+  await loadPresets(); alert("保存しました（オーナーとも共有されます）");
+}
+async function deletePreset(name) {
+  if (!name || !confirm(`プリセット「${name}」を削除しますか？`)) return;
+  await api("/api/presets", {method:"POST", body: JSON.stringify({name, delete: true})}); await loadPresets();
+}
+function setOptions(o) {
+  if (!o) return;
+  document.querySelectorAll(".rule").forEach(c => { if (c.value in o) c.checked = !!o[c.value]; });
+  if (o.exclude_keys) document.querySelectorAll(".exkey").forEach(c => c.checked = o.exclude_keys.includes(c.value));
+  if (o.group_off) { document.querySelectorAll(".grp").forEach(c => c.checked = !o.group_off.includes(c.value)); applyGroups(); }
+  if (o.exclude_files) document.querySelectorAll(".exuse").forEach(c => c.checked = o.exclude_files.includes(c.value));
+}
+async function loadRules() {
+  const j = await api("/api/rules"); RULES = j.rules;
+  let saved = loadOpts(); if (saved.v !== OPTS_VER) saved = {exclude_files: saved.exclude_files, exclude_keys: saved.exclude_keys};
+  let kind = null, h = "";
+  for (const r of RULES) {
+    if (r.kind !== kind) {
+      kind = r.kind;
+      const goff = (saved.group_off || []).includes(kind);
+      h += `<div class="kind" style="display:flex;gap:6px;align-items:center;margin-top:10px"><label style="padding:0"><input type="checkbox" class="grp" value="${esc(kind)}" ${goff ? "" : "checked"}>${esc(kind)}を有効にする</label></div>`;
+      if (kind === "TELチェック") h += `<div class="small" style="margin-left:22px">TELカラム <select class="colsel" id="telCol"><option value="">自動</option></select></div>`;
+      if (kind === "住所正規化") h += `<div class="small" style="margin-left:22px">住所カラム <select class="colsel" id="addrCol"><option value="">自動</option></select></div>`;
+    }
+    const on = r.key in saved ? saved[r.key] : r.default;
+    h += `<label><input type="checkbox" class="rule" value="${r.key}" ${on ? "checked" : ""}><span>${esc(r.label)} <b class="cand" data-k="${r.key}"></b></span></label>`;
+    if (r.key === "chain") h += `<div class="small" style="margin:0 0 4px 22px">同じブランドが <input type="number" id="chainMin" min="2" value="${saved.chain_min || ""}" placeholder="自動" style="width:60px"> 件以上でチェーン扱い <span id="chainAuto"></span><br>（空欄＝自動：リスト件数の0.05%・最低3件）</div>`;
+  }
+  $("#rules").innerHTML = h;
+  if (saved.exclude_keys) setOptions({exclude_keys: saved.exclude_keys});
+  document.querySelectorAll(".rule,.exkey,#chainMin,.grp,.colsel").forEach(c => c.addEventListener("change", () => { applyGroups(); saveOpts(); }));
+  applyGroups();
+}
+function applyGroups() {  // グループをOFFにしたら中のルールを薄く表示
+  let cur = null;
+  document.querySelectorAll("#rules > *").forEach(el => {
+    const g = el.querySelector?.(".grp"); if (g) { cur = g.checked; return; }
+    if (cur !== null) el.style.opacity = cur ? "" : ".4";
+  });
+}
+function fillColSelects() {  // 今開いているリストの列名を TEL/住所カラムの選択肢に
+  const names = (CUR.check?.report?.column_config || []).map(c => c.name);
+  const o = CUR.check?.options || loadOpts();
+  for (const [id, key, auto] of [["telCol", "tel_col", "tel_col"], ["addrCol", "addr_col", "addr_col"]]) {
+    const sel = $("#" + id); if (!sel) continue;
+    const det = CUR.check?.report?.options?.[auto];
+    sel.innerHTML = `<option value="">自動${det ? "（" + esc(det) + "）" : ""}</option>` + names.map(n => `<option ${o[key] === n ? "selected" : ""}>${esc(n)}</option>`).join("");
+  }
+}
+function showCandidates() {  // 今のリストでルールをONにしたら何件消えるか
+  const cand = CUR.check?.report?.candidates || {};
+  if ($("#chainAuto")) $("#chainAuto").textContent = CUR.check?.report?.chain_min_used ? `→ このリストでは ${CUR.check.report.chain_min_used}件以上` : "";
+  document.querySelectorAll(".cand").forEach(b => { b.textContent = b.dataset.k in cand ? `（このリスト: ${Number(cand[b.dataset.k]).toLocaleString()}件）` : ""; });
+}
+async function loadExcludes() {
+  const j = await api("/api/excludes"); const saved = loadOpts().exclude_files || [];
+  $("#excludes").innerHTML = j.files.map(f => `<li><label style="display:flex;gap:6px;flex:1;min-width:0;cursor:pointer"><input type="checkbox" class="exuse" value="${esc(f.name)}" ${saved.includes(f.name) ? "checked" : ""}><span class="t">${esc(f.name)}</span></label><button onclick="removeExclude(this.dataset.n)" data-n="${esc(f.name)}" title="一覧から外す">外す</button></li>`).join("") || "<li class='small'>（なし）</li>";
+  document.querySelectorAll(".exuse").forEach(c => c.addEventListener("change", saveOpts));
+}
+async function uploadExclude(files) {
+  files = [...files];
+  for (const f of files) await api(`/api/upload_exclude?name=${encodeURIComponent(f.name)}`, {method:"POST", body: f});
+  const o = loadOpts(); o.exclude_files = [...new Set([...(o.exclude_files||[]), ...files.map(f => f.name)])];
+  try { localStorage.setItem("mokken_opts", JSON.stringify(o)); } catch(e) {}
+  await loadExcludes();
+}
+async function removeExclude(name) {
+  if (!confirm(name + " を除外リスト一覧から外しますか？（exclude フォルダ内の「_外したファイル」に移動します）")) return;
+  await api("/api/remove_exclude", {method:"POST", body: JSON.stringify({name})}); saveOpts(); await loadExcludes();
+}
+async function reprocess() {
+  await busy("このルールで再処理中…", async () => {
+    const o = getOptions(); o.columns = CUR.check ? colConf() : o.columns;
+    o.periods = Object.entries(PERIODS).map(([col, p]) => ({col, start: p.start, end: p.end}));
+    const j = await api("/api/reprocess", {method:"POST", body: JSON.stringify({id: CUR.check.id, options: o})});
+    CUR.check = j.check; render(); loadSide();
+  });
+}
+
+async function api(path, opt={}) {
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(() => ({error: "応答を読めませんでした"}));
+  if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+  return j;
+}
+async function busy(msg, fn) {
+  if (typeof closeAddDialog === "function") closeAddDialog();  // 処理を始めたら追加ウィンドウは閉じる(処理中表示が隠れないように)
+  $("#busy").textContent = msg; $("#busy").classList.add("on");
+  try { return await fn(); } catch(e) { showErr(e.message); } finally { $("#busy").classList.remove("on"); }
+}
+function showErr(m) { const d = document.createElement("div"); d.className = "err"; d.textContent = m; $("#main").prepend(d); setTimeout(() => d.remove(), 15000); }
+
+async function openIssue(k) {
+  const key = k || $("#key").value.trim();
+  if (!key) return;
+  await busy("Backlogから取得中…", async () => {
+    const j = await api("/api/issue?key=" + encodeURIComponent(key));
+    CUR = {issue: j.issue, check: j.check};
+    $("#key").value = j.issue.key;
+    render(); loadTaskList();
+  });
+}
+async function openCheck(id) {
+  await busy("読み込み中…", async () => {
+    const j = await api("/api/check?id=" + encodeURIComponent(id));
+    CUR = {issue: j.check.issue, check: j.check};
+    PERIODS = Object.fromEntries((j.check.options?.periods || []).map(p => [p.col, {start: p.start, end: p.end}]));
+    setOptions(j.check.options);
+    render(); loadTaskList();
+  });
+}
+async function processAttachment(id) {
+  await busy("添付をダウンロードして処理中…（13万件で20秒ほど）", async () => {
+    const j = await api("/api/process_attachment", {method:"POST", body: JSON.stringify({key: CUR.issue.key, id, options: getOptions()})});
+    CUR = {issue: j.check.issue || CUR.issue, check: j.check}; render(); loadSide();
+  });
+}
+async function uploadFile(f) {
+  await busy(`${f.name} を処理中…`, async () => {
+    const key = CUR.issue && !/STREAMREQ-\d+|[A-Z]+-\d+/.test(f.name) ? CUR.issue.key : "";
+    const j = await api(`/api/upload?name=${encodeURIComponent(f.name)}&key=${encodeURIComponent(key)}&opt=${encodeURIComponent(JSON.stringify(getOptions()))}`, {method:"POST", body: f});
+    CUR = {issue: j.check.issue, check: j.check}; render(); loadSide();
+  });
+}
+async function processInput(name) {
+  await busy(`${name} を処理中…`, async () => {
+    const key = CUR.issue && !/[A-Z]+-\d+/.test(name) ? CUR.issue.key : "";
+    const j = await api("/api/process_input", {method:"POST", body: JSON.stringify({name, key, options: getOptions()})});
+    CUR = {issue: j.check.issue, check: j.check}; render(); loadSide();
+  });
+}
+async function toggle(item, role, on) {
+  if (!me.value.trim()) { alert("右上に名前を入れてください"); render(); return; }
+  const j = await api("/api/check_item", {method:"POST", body: JSON.stringify({id: CUR.check.id, item, role, on, by: me.value.trim()})});
+  CUR.check = j.check; render(); loadSide();
+}
+async function memo(item, text) {
+  const j = await api("/api/check_item", {method:"POST", body: JSON.stringify({id: CUR.check.id, item, memo: text})});
+  CUR.check = j.check;
+}
+async function reloadCheck() { if (CUR.check) { const j = await api("/api/check?id=" + encodeURIComponent(CUR.check.id)); CUR.check = j.check; render(); } }
+async function postComment() {
+  const j = await api("/api/comment_preview?id=" + encodeURIComponent(CUR.check.id));
+  const text = prompt("この内容でBacklogにコメントします（編集可）。\n※課題の関係者に通知されます。", j.text);
+  if (text === null) return;
+  if (!confirm(`${CUR.check.issue.key} にコメントを投稿します。よろしいですか？`)) return;
+  await busy("投稿中…", async () => {
+    const r = await api("/api/post_comment", {method:"POST", body: JSON.stringify({id: CUR.check.id, text})});
+    CUR.check = r.check; render(); alert("投稿しました");
+  });
+}
+function openFolder(which) { fetch("/api/open_folder?which=" + which); }
+
+function pill(s) {
+  const t = {ok:"OK", ng:"NG", info:"確認", manual:"目視"}[s] || s;
+  return `<span class="pill ${s}">${t}</span>`;
+}
+
+// ---------------- 子課題
+let TASKS = null;
+const OPEN_KIDS = new Set();  // 詳細を開いている子課題
+function toggleKid(key) { OPEN_KIDS.has(key) ? OPEN_KIDS.delete(key) : OPEN_KIDS.add(key); renderTasks(); }
+async function loadTasks(key) {
+  TASKS = {loading: true, parent: {key}}; renderTasks();
+  try { TASKS = await api("/api/tasks?key=" + encodeURIComponent(key)); } catch (e) { TASKS = {error: e.message, parent: {key}}; }
+  renderTasks();
+}
+function renderTasks() {
+  const box = $("#tasks"); if (!box) return;
+  if (!TASKS || TASKS.loading) { box.innerHTML = `<span class="small">読み込み中…</span>`; return; }
+  if (TASKS.error) { box.innerHTML = `<span class="small">子課題を取得できませんでした（${esc(TASKS.error)}）<a href="#" onclick="loadTasks(CUR.issue.key);return false">再読み込み</a></span>`; return; }
+  const t = TASKS, meId = t.me.id;
+  const rows = t.children.map(c => { const open = OPEN_KIDS.has(c.key);
+    return `<tr class="kid ${open ? "open" : ""}" onclick="toggleKid('${esc(c.key)}')" title="クリックで詳細を${open ? "閉じる" : "表示"}">
+    <td style="white-space:nowrap"><span class="arw">${open ? "▼" : "▶"}</span><a href="${esc(c.url)}" target="_blank" onclick="event.stopPropagation()">${esc(c.key)}</a></td><td>${esc(c.type)}</td><td>${esc(c.summary)}</td>
+    <td>${esc(c.assignee || "未設定")}</td><td>${esc(c.status)}</td>
+    <td onclick="event.stopPropagation()" style="cursor:default;white-space:nowrap">${c.assignee_id === meId ? `<span class="small">自分の担当</span>` : `<button onclick="assignMe('${esc(c.key)}')">自分の担当にする</button>`}
+      ${c.summary.startsWith("目検") && !["処理済み", "完了"].includes(c.status) ? `<button class="primary" onclick="setDone('${esc(c.key)}')">処理済みにする</button>` : ""}</td></tr>
+    ${open ? `<tr class="kid-detail"><td colspan="6">
+      <div class="small">登録: ${esc(c.created_user || "-")} ${esc(c.created || "")} ／ 期限: ${esc(c.due || "-")}</div>
+      ${c.description?.trim() ? `<div class="kd-body">${esc(c.description)}</div>` : `<div class="kd-body small">詳細（本文）は書かれていません</div>`}
+      <button class="kd-close" onclick="toggleKid('${esc(c.key)}')" title="詳細を閉じる">▲ 閉じる</button></td></tr>` : ""}`; }).join("");
+  box.innerHTML = `<div class="row" style="flex-wrap:wrap;margin-bottom:6px">
+      ${t.mokken.length ? `<span class="pill ok">目検タスクあり</span><a href="${esc(t.mokken[0].url)}" target="_blank">${esc(t.mokken[0].key)}</a><span class="small">（${esc(t.mokken[0].status)}）</span>
+          ${!["処理済み", "完了"].includes(t.mokken[0].status) ? `<button class="primary" onclick="setDone('${esc(t.mokken[0].key)}')">目検タスクを処理済みにする</button>` : ""}`
+        : `<button class="primary" onclick="createMokken()">目検タスクを追加</button><span class="small">種別「その他」・件名「目検　${esc(t.parent.summary)}」・担当 ${esc(t.me.name)}・状態「処理済み」で子課題を作ります</span>`}    </div>
+    ${rows ? `<table class="notes"><tr><th>課題</th><th>種別</th><th>件名</th><th>担当</th><th>状態</th><th></th></tr>${rows}</table>` : `<span class="small">子課題はまだありません</span>`}`;
+}
+async function createMokken() {
+  const t = TASKS;
+  if (!confirm(`Backlogに子課題を作ります。\n\n親課題: ${t.parent.key}\n件名: 目検　${t.parent.summary}\n種別: その他\n担当: ${t.me.name}\n状態: 処理済み（作成後すぐに変更）\n\nよろしいですか？`)) return;
+  await busy("目検タスクを作成中…", async () => {
+    const r = await api("/api/create_mokken", {method: "POST", body: JSON.stringify({key: t.parent.key})});
+    TASKS = r.tasks; renderTasks(); alert(`作成しました: ${r.created}`);
+  });
+}
+async function setDone(child) {
+  const c = TASKS.children.find(x => x.key === child);
+  if (!confirm(`${child}「${c.summary}」の状態を ${c.status} → 処理済み に変えます。よろしいですか？`)) return;
+  await busy("処理済みに変更中…", async () => {
+    const r = await api("/api/set_done", {method: "POST", body: JSON.stringify({key: TASKS.parent.key, child})});
+    TASKS = r.tasks; renderTasks();
+  });
+}
+async function assignMe(child) {
+  const c = TASKS.children.find(x => x.key === child);
+  if (!confirm(`${child}「${c.summary}」の担当者を ${c.assignee || "未設定"} → ${TASKS.me.name} に変えます。よろしいですか？`)) return;
+  await busy("担当者を変更中…", async () => {
+    const r = await api("/api/assign_me", {method: "POST", body: JSON.stringify({key: TASKS.parent.key, child})});
+    TASKS = r.tasks; renderTasks();
+  });
+}
+
+function renderIssue(iss) {
+  if (!iss) return "";
+  const sec = iss.sections || {};
+  const summaryComment = (iss.comments || []).filter(c => /実行サマリ|サマリ/.test(c.content)).slice(-1)[0];
+  return `<div class="card">
+    <div class="issue-head"><a href="${esc(iss.url)}" target="_blank">${esc(iss.key)}</a><b>${esc(iss.summary)}</b>
+      <span class="pill manual">${esc(iss.status)}</span></div>
+    <div class="small">顧客: ${esc(iss.customer||"-")} ／ 営業: ${esc(iss.sales||"-")} ／ 担当: ${esc(iss.assignee||"-")} ／ 期限: ${esc(iss.due||"-")} ／ エリア: ${esc(iss.area||"-")}</div>
+    <h2 style="margin-top:10px">リスト詳細</h2>
+    <ul class="details">${(iss.details||[]).map(d => `<li>${esc(d)}</li>`).join("") || "<li class='small'>（記載なし）</li>"}</ul>
+    ${sec["備考"] && sec["備考"] !== "（未入力）" ? `<div class="small">備考: ${esc(sec["備考"])}</div>` : ""}
+    <h2 style="margin-top:10px">子課題（目検・検品）</h2>
+    <div id="tasks"><span class="small">読み込み中…</span></div>
+    <h2 style="margin-top:10px">添付ファイル</h2>
+    <ul class="list">${(iss.attachments||[]).map(a => `<li onclick="processAttachment(${a.id})"><span class="t">${esc(a.name)}</span><span class="small">${(a.size/1024/1024).toFixed(1)}MB ${esc(a.created)}</span><button class="primary">この添付で目検</button></li>`).join("") || "<li class='small'>添付なし（「＋ 手動で追加」からCSVを入れてください）</li>"}</ul>
+    ${summaryComment ? `<details><summary>作業者の実行サマリ（${esc(summaryComment.user)} ${esc(summaryComment.created)}）</summary><pre>${esc(summaryComment.content)}</pre></details>` : ""}
+  </div>`;
+}
+
+function renderCheck(chk) {
+  if (!chk || !chk.report) return "";
+  const rep = chk.report, st = chk.state || {};
+  const main = rep.checks.filter(c => !c.auto || c.status === "ng");
+  const notes = rep.checks.filter(c => c.auto && c.status !== "ng");
+  const total = main.length;
+  const nStaff = main.filter(c => st[c.id]?.staff).length;
+  const nOwner = main.filter(c => st[c.id]?.owner).length;
+  const c = rep.counts || {};
+  const noteRows = notes.map(it => `<tr><td style="width:56px">${pill(it.status)}</td><td style="white-space:nowrap">${esc(it.title)}</td><td class="small">${esc(it.detail)}</td></tr>`).join("");
+  let rows = "", g = null;
+  for (const it of main) {
+    if (it.group !== g) { g = it.group; rows += `<tr class="group"><td colspan="6">${esc(g)}</td></tr>`; }
+    const s = st[it.id] || {};
+    const cell = (role, label) => {
+      const v = s[role];
+      return `<td class="chk"><label><input type="checkbox" ${v ? "checked" : ""} onchange="toggle('${it.id}','${role}',this.checked)">
+        <span class="small">${v ? esc(v.by) + "<br>" + esc(v.at.slice(5)) : label}</span></label></td>`;
+    };
+    rows += `<tr class="${s.staff && s.owner ? "done-both" : ""}"><td>${pill(it.status)}</td><td><b>${esc(it.title)}</b><div class="small">${esc(it.detail)}</div></td>
+      ${cell("staff","担当")}${cell("owner","オーナー")}
+      <td><input type="text" class="memo" value="${esc(s.memo||"")}" placeholder="メモ" onchange="memo('${it.id}',this.value)"></td></tr>`;
+  }
+  const colRows = rep.columns.map(col => `<tr><td class="name">${col.industry ? "🏷 " : ""}${esc(col.name)}</td>
+    <td style="width:55%"><div class="bar ${col.industry ? "ind" : ""}"><i style="width:${col.pct}%"></i></div></td>
+    <td style="text-align:right;white-space:nowrap">${col.pct}%</td><td class="small" style="text-align:right">${fmt(col.filled)}</td></tr>`).join("");
+  const ind = rep.industry.map(x => `<details open><summary>${esc(x.name)} … ${x.pct}%（${fmt(x.filled)}件・${fmt(x.kinds)}種類）</summary>
+    <table class="cols">${x.top.map(([k,v]) => `<tr><td class="name">${esc(k)}</td><td style="width:50%"><div class="bar ind"><i style="width:${(v/x.top[0][1]*100).toFixed(1)}%"></i></div></td><td class="small" style="text-align:right">${fmt(v)}</td></tr>`).join("")}</table></details>`).join("");
+  const prefInd = (rep.pref_industry||[]).length && rep.pref_industry[0].industry_pct !== null ? `<details><summary>都道府県別の業種充足率</summary><table class="cols">${rep.pref_industry.map(p => `<tr><td class="name">${esc(p.pref)}</td><td class="small">${fmt(p.rows)}件</td><td style="width:50%"><div class="bar ind"><i style="width:${p.industry_pct}%"></i></div></td><td style="text-align:right">${p.industry_pct}%</td></tr>`).join("")}</table></details>` : "";
+  const labels = {zip_filled:"郵便番号 補完", zip_refilled:"郵便番号 引き直し", zip_format:"郵便番号 表記統一", zip_review:"郵便番号 要確認",
+    capital_fixed:"資本金 表記統一", capital_review:"資本金 要確認", emp_fixed:"従業員数 表記統一", emp_review:"従業員数 要確認",
+    person_fixed:"人名 整形", person_blank:"人名 無効値を空欄", person_review:"人名 要確認", title_moved:"役職列へ移動",
+    tel_deleted:"TEL 市外局番不一致で削除", addr_norm:"住所 正規化", zip_moved:"住所の郵便番号を郵便番号列へ", tel_format:"TEL ハイフン追加・位置修正", tel_unformattable:"TEL ハイフン追加できず削除", tel_bad:"TEL 桁数不正で削除", pref_fixed:"都道府県 住所に合わせて修正",
+    capital_deleted:"資本金 直せず削除", emp_deleted:"従業員数 直せず削除", person_deleted:"人名 直せず削除", zip_deleted:"郵便番号 不正で削除", tel_nohyphen:"TEL ハイフンなしで削除", name_eq:"名称 先頭の「=」を削除", tel_review:"TEL 市外局番 要確認"};
+  const samples = Object.entries(rep.samples||{}).map(([k, arr]) => `<details><summary>${esc(labels[k]||k)}：${fmt(c[k]||0)}件</summary>
+    <table class="samples"><tr><th>行</th><th>修正前</th><th>修正後</th><th>内容</th></tr>${arr.map(s => `<tr><td>${s.row}</td><td>${esc(s.before)}</td><td>${esc(s.after)}</td><td>${esc(s.note)}</td></tr>`).join("")}</table>
+    <div class="small">※先頭8件のみ表示。全件は「修正ログ」CSVを参照</div></details>`).join("");
+  const areaNote = rep.area_official === false ? `<div class="hint">市外局番チェックは「ハローワーク実績による参考判定」のため、TELは消さずに要確認として出しています（総務省の市外局番一覧を data フォルダに入れると自動削除に切り替わります）。</div>` : "";
+  return `<div class="card">
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+      <div><b>${esc(rep.filename)}</b><div class="small">処理: ${esc(chk.processed_at)}（${esc(rep.source||"")}） 保存先ID: ${esc(chk.id)}</div></div>
+      <div class="row"><button onclick="reprocess()" ${chk.source_path ? "" : "disabled"} title="左の処理ルールや列の並びを変えたら押す">設定を変えて作り直す</button><button onclick="reloadCheck()">最新に更新</button>${chk.issue ? `<button class="primary" onclick="postComment()">Backlogにチェック結果を投稿</button>` : ""}</div>
+    </div>
+    <div class="kpis" style="margin-top:10px">
+      <div class="kpi"><span class="small">元の件数</span><b>${fmt(rep.rows_in)}</b></div>
+      <div class="kpi"><span class="small">修正後の件数</span><b>${fmt(rep.rows_out)}</b></div>
+      <div class="kpi"><span class="small">除外</span><b style="color:${rep.removed ? "var(--ng)" : "inherit"}">${fmt(rep.removed)}</b></div>
+      <div class="kpi"><span class="small">担当チェック</span><b>${nStaff}/${total}</b><div class="progress"><i style="width:${nStaff/total*100}%;background:var(--accent)"></i></div></div>
+      <div class="kpi"><span class="small">オーナーチェック</span><b>${nOwner}/${total}</b><div class="progress"><i style="width:${nOwner/total*100}%;background:var(--ok)"></i></div></div>
+    </div>
+    ${(rep.chains||[]).length ? `<details style="margin-top:8px"><summary>チェーン店と判定したブランド（${rep.chain_brand_count || rep.chains.length}件、多い順に30件表示・${fmt(rep.candidates?.chain||0)}行）${rep.options?.chain ? "…除外済み" : "…「チェーン店を除外」をONにすると除外"}</summary>
+      <div class="small">${rep.chains.map(([b,n]) => `${esc(b)}（${n}）`).join("、")}</div></details>` : ""}
+    ${(rep.removed_reasons||[]).length ? `<ul class="reasons">${rep.removed_reasons.map(([k,v]) => `<li>除外: ${esc(k)} … <b>${fmt(v)}</b>件</li>`).join("")}</ul>` : ""}
+    ${rep.options ? `<div class="small" style="margin-top:6px">初期値からOFFにしたルール: ${esc(RULES.filter(r => r.default && rep.options[r.key] === false).map(r => r.label).join("、") || "なし")}</div>` : ""}
+    <div style="margin:12px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fafbfc">
+      <div class="row" style="flex-wrap:wrap"><a class="primary" style="background:var(--accent);color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:700" href="/files/${encodeURIComponent(rep.files?.["修正済みCSV"]||"")}">納品用CSVをダウンロード</a>
+        <span style="font-weight:700">${esc(rep.files?.["修正済みCSV"]||"")}</span></div>
+      <div class="small" style="margin-top:6px">確認用：${rep.files?.["除外行"] ? `<a href="/files/${encodeURIComponent(rep.files["除外行"])}">除外した行</a>（理由付き）` : "除外した行なし"}
+        ／ ${rep.files?.["修正ログ"] ? `<a href="/files/${encodeURIComponent(rep.files["修正ログ"])}">修正ログ</a>（どこを何から何に直したか）` : "修正なし"}
+        ／ <a href="#" onclick="openFolder('output');return false">outputフォルダを開く</a></div></div>
+    ${(chk.posted||[]).length ? `<div class="small">Backlog投稿済み: ${chk.posted.map(p => esc(p.at)).join("、")}</div>` : ""}
+  </div>
+  <div class="card"><h2>チェックリスト（上から1行ずつ確認してチェック）</h2>${areaNote}
+    <table><tr><th style="width:56px">自動</th><th>項目</th><th style="text-align:center">担当</th><th style="text-align:center">オーナー</th><th>メモ</th></tr>${rows}</table>
+    <details style="margin-top:12px"><summary>備考（自動処理の結果） ${notes.length}項目 … 自動で直す・消すところまで済んでいるもの</summary>
+      <table class="notes">${noteRows}</table></details></div>
+  <div class="grid2">
+    <div class="card"><h2>納品用CSVの列（並び・列名・削除）と充足率（🏷＝業種）</h2><div id="colEditor"></div></div>
+    <div class="card"><h2>業種の埋まり具合</h2>${ind || "<div class='small'>業種列なし</div>"}${prefInd}</div>
+  </div>
+  <div class="card"><h2>期間系の列（掲載開始日・設立など）の分布</h2><div id="dateCols"></div></div>
+  <div class="card"><h2>自動修正の内容</h2>${samples || "<div class='small'>修正なし</div>"}</div>`;
+}
+
+function render() {
+  let html = "";
+  if (CUR.issue) html += renderIssue(CUR.issue);
+  if (CUR.check) html += renderCheck(CUR.check);
+  else if (CUR.issue) html += `<div class="card"><div class="hint">添付の「この添付で目検」を押すか、「＋ 手動で追加」からCSVを入れると自動修正とチェックリストが作られます。</div></div>`;
+  $("#main").innerHTML = html || $("#main").innerHTML;
+  renderColEditor();
+  renderDateCols();
+  if (CUR.issue && (!TASKS || TASKS.parent?.key !== CUR.issue.key)) loadTasks(CUR.issue.key);
+  else renderTasks();
+  showCandidates();
+  fillColSelects();
+}
+
+// ---------------- タスクのタブ(左端)。課題を取得・処理するとサーバー側で自動追加される
+let TASKLIST = [], TASK_SEL = null, TASK_FILTER = "all", TASK_RENAMING = false, TASK_SYNCED_KEY = null, noteTimer = null;
+const findTask = id => TASKLIST.find(t => t.id === id);
+async function loadTaskList() {
+  try { TASKLIST = (await api("/api/task_list")).tasks; } catch(e) { return; }
+  const key = CUR.issue?.key;  // 課題を開いたら、そのタブを選択(手動で選んだタブは上書きしない)
+  if (key && key !== TASK_SYNCED_KEY) { TASK_SYNCED_KEY = key; const t = TASKLIST.find(x => x.key === key); if (t) TASK_SEL = t.id; }
+  renderTaskList();
+}
+function renderTaskList() {
+  if (TASK_RENAMING) return;
+  const shown = TASKLIST.filter(t => TASK_FILTER === "all" || (TASK_FILTER === "done" ? t.done : !t.done));
+  $("#taskList").innerHTML = shown.map(t => `<li class="tab ${t.id === TASK_SEL ? "active" : ""} ${t.done ? "done" : ""}" data-id="${esc(t.id)}" onclick="clickTask(this.dataset.id)">
+      <input type="checkbox" ${t.done ? "checked" : ""} title="完了にする" onclick="event.stopPropagation()" onchange="updateTask(this.closest('li').dataset.id, {done: this.checked})">
+      <span class="tn"><span class="nm" title="${esc(t.summary || t.name)}（ダブルクリックで名前を変更）" ondblclick="event.stopPropagation();renameTask(this.closest('li').dataset.id)">${esc(t.name)}</span>${t.key ? `<span class="small">${esc(t.key)}</span>` : ""}</span>
+      <button class="ic" title="名前を変更" onclick="event.stopPropagation();renameTask(this.closest('li').dataset.id)">✎</button>
+      <button class="ic del" title="タブを削除" onclick="event.stopPropagation();deleteTask(this.closest('li').dataset.id)">✕</button></li>`).join("")
+    || `<li class="small">${TASKLIST.length ? "該当なし" : "（なし）課題を取得すると追加されます"}</li>`;
+  $("#taskCount").textContent = TASKLIST.length ? `${TASKLIST.filter(t => t.done).length}/${TASKLIST.length} 完了` : "";
+  const t = findTask(TASK_SEL), ta = $("#taskNote");
+  $("#taskNoteCard").hidden = !t;
+  if (!t) return;
+  $("#taskNoteTitle").textContent = t.name;
+  if (ta.dataset.id !== t.id || document.activeElement !== ta) { ta.value = t.notes || ""; ta.dataset.id = t.id; }
+}
+async function updateTask(id, fields, quiet) {
+  try { TASKLIST = (await api("/api/task_update", {method: "POST", body: JSON.stringify({id, ...fields})})).tasks; }
+  catch(e) { showErr(e.message); }
+  if (!quiet) renderTaskList();
+}
+function clickTask(id) {
+  TASK_SEL = id; renderTaskList();
+  const t = findTask(id);
+  if (t?.key && CUR.issue?.key !== t.key) { TASK_SYNCED_KEY = t.key; openIssue(t.key); }
+}
+function renameTask(id) {
+  const li = [...document.querySelectorAll("#taskList li")].find(x => x.dataset.id === id), t = findTask(id);
+  if (!li || !t) return;
+  const inp = document.createElement("input");
+  inp.type = "text"; inp.className = "rn-task"; inp.value = t.name;
+  li.querySelector(".nm").replaceWith(inp); TASK_RENAMING = true; inp.focus(); inp.select();
+  let fin = false;
+  const finish = ok => {
+    if (fin) return; fin = true; TASK_RENAMING = false;
+    const v = inp.value.trim();
+    if (ok && v && v !== t.name) updateTask(id, {name: v}); else renderTaskList();
+  };
+  inp.onclick = inp.ondblclick = e => e.stopPropagation();
+  inp.onkeydown = e => { if (e.key === "Enter") finish(true); if (e.key === "Escape") finish(false); };
+  inp.onblur = () => finish(true);
+}
+async function deleteTask(id) {
+  const t = findTask(id);
+  if (!t || !confirm(`タブ「${t.name}」を削除しますか？\n（メモも消えます。Backlogの課題やチェック結果は消えません）`)) return;
+  try { TASKLIST = (await api("/api/task_delete", {method: "POST", body: JSON.stringify({id})})).tasks; } catch(e) { return showErr(e.message); }
+  if (TASK_SEL === id) TASK_SEL = null;
+  renderTaskList();
+}
+// 「＋ 手動で追加」→ ①課題を開く・②ファイルを入れる のウィンドウ
+const addDlg = $("#addDlg");
+function addManualTask() { addDlg.showModal(); $("#key").focus(); $("#key").select(); }
+function closeAddDialog() { if (addDlg.open) addDlg.close(); }
+addDlg.addEventListener("click", e => { if (e.target === addDlg) closeAddDialog(); });  // 外側(暗いところ)をクリックで閉じる
+async function addNamedTask() {
+  const name = $("#manualName").value.trim(); if (!name) return $("#manualName").focus();
+  try { TASKLIST = (await api("/api/task_add", {method: "POST", body: JSON.stringify({name})})).tasks; } catch(e) { return showErr(e.message); }
+  $("#manualName").value = ""; closeAddDialog();
+  TASK_SEL = TASKLIST[0]?.id; if (TASK_FILTER === "done") setTaskFilter("all"); else renderTaskList();
+}
+$("#manualName").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addNamedTask(); } });
+async function addBulkTasks() {
+  const box = $("#taskKeys"), text = box.value.trim(); if (!text) return;
+  await busy("タブを追加中…", async () => {
+    const r = await api("/api/task_add_bulk", {method: "POST", body: JSON.stringify({text})});
+    TASKLIST = r.tasks;
+    const msg = [`${r.added.length}件追加`];
+    if (r.existed.length) msg.push(`${r.existed.length}件は追加済み`);
+    if (r.failed.length) msg.push(`追加できず: ${r.failed.map(f => `${f.key}（${f.error}）`).join("、")}`);
+    if (!r.added.length && !r.existed.length && !r.failed.length) msg[0] = "課題番号が見つかりませんでした";
+    $("#taskAddMsg").textContent = msg.join(" ／ ");
+    $("#taskAddMsg").style.color = r.failed.length ? "var(--ng)" : "";
+    box.value = r.failed.map(f => f.key).join(" ");  // 失敗分だけ残して再試行しやすく
+    if (TASK_FILTER === "done") setTaskFilter("all"); else renderTaskList();
+  });
+}
+$("#taskKeys").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addBulkTasks(); } });
+async function clearTasks() {
+  if (!TASKLIST.length) return;
+  if (!confirm(`タブ ${TASKLIST.length}件をすべて削除しますか？\nメモも消えます（直前の状態は tasks.json.bak に残ります。Backlogの課題やチェック結果は消えません）`)) return;
+  try { TASKLIST = (await api("/api/task_clear", {method: "POST"})).tasks; } catch(e) { return showErr(e.message); }
+  TASK_SEL = null; $("#taskAddMsg").textContent = ""; renderTaskList();
+}
+function setTaskFilter(f) {
+  TASK_FILTER = f;
+  document.querySelectorAll(".tfilter button").forEach(b => b.classList.toggle("on", b.dataset.f === f));
+  renderTaskList();
+}
+document.querySelectorAll(".tfilter button").forEach(b => b.onclick = () => setTaskFilter(b.dataset.f));
+$("#taskNote").addEventListener("input", e => {
+  const id = e.target.dataset.id, v = e.target.value, t = findTask(id);
+  if (t) t.notes = v;
+  $("#noteState").textContent = "保存中…";
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(async () => { await updateTask(id, {notes: v}, true); $("#noteState").textContent = "保存しました"; }, 600);
+});
+
+async function loadSide() {
+  loadTaskList();
+  try {
+    const a = await api("/api/inputs");
+    $("#inputs").innerHTML = a.files.map(f => `<li title="${esc(f.name)}" onclick="processInput(this.dataset.n)" data-n="${esc(f.name)}"><span class="t">${esc(f.name)}</span><button>処理</button></li>`).join("") || "<li class='small'>（空）</li>";
+    const h = await api("/api/checks");
+    $("#checksdir").textContent = "";
+    $("#history").innerHTML = h.items.map(x => `<li onclick="openCheck(this.dataset.id)" data-id="${esc(x.id)}" title="${esc(x.summary)}">
+      <span class="t"><b>${esc(x.id)}</b> <span class="small">${esc(x.summary||"")}</span></span>
+      <span class="small">担${x.staff}/${x.total} オ${x.owner}/${x.total}</span></li>`).join("") || "<li class='small'>（なし）</li>";
+  } catch(e) {}
+}
+
+const drop = $("#drop"), file = $("#file");
+drop.onclick = () => file.click();
+file.onchange = () => { if (file.files[0]) uploadFile(file.files[0]); file.value = ""; };
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) uploadFile(f); });
+// preventDefault: 閉じた後に「＋ 手動で追加」へEnterが伝わって開き直さないように
+$("#key").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); openIssue(); } });
+const exdrop = $("#exdrop"), exfile = $("#exfile");
+exdrop.onclick = () => exfile.click();
+exfile.onchange = () => { if (exfile.files.length) uploadExclude(exfile.files); exfile.value = ""; };
+["dragenter","dragover"].forEach(ev => exdrop.addEventListener(ev, e => { e.preventDefault(); exdrop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => exdrop.addEventListener(ev, e => { e.preventDefault(); exdrop.classList.remove("over"); }));
+exdrop.addEventListener("drop", e => { if (e.dataTransfer.files.length) uploadExclude(e.dataTransfer.files); });
+loadRules().then(loadExcludes).then(loadPresets);
+loadSide();
+setInterval(() => { loadSide(); }, 30000);
+</script>
+</body>
+</html>

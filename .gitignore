@@ -1,0 +1,24 @@
+# 顧客データ・作業データ（アップロードしない）
+checks/
+input/
+input_done/
+output/
+exclude/
+cache/
+tasks.json
+tasks.json.bak
+*.tmp
+
+# 個人の設定・APIキー
+設定.txt
+APIキー.txt
+
+# 念のためリストのファイルは全部除外（市外局番データだけ残す）
+*.csv
+*.xlsx
+*.xlsm
+!data/shigai_kyokuban.csv
+
+# Python
+__pycache__/
+*.pyc
