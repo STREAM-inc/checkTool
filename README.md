@@ -21,14 +21,18 @@
    git clone https://github.com/STREAM-inc/checkTool.git 3-目検
    ```
 
-2. `3-目検` の直下に **`APIキー.txt`**（Backlog の API キーを 1 行）を置く（目検ツールで使用）
+2. `APIキー.example.txt` を **`APIキー.txt`** という名前でコピーし、中身を自分の Backlog の API キー 1 行だけに書き換える（目検ツールで使用）
+   - API キーは Backlog の「個人設定 → API」で発行できます
+   - ファイルの中身はそのままキーとして使われるので、説明文やコメントは書かないでください
+   - `APIキー.txt` は `.gitignore` で除外されているので、アップロードされません
 3. 必要な人は各ツールの設定ファイルを作る（無くても初期値で動くものは不要）
    - `目検ツール/設定.example.txt` → `目検ツール/設定.txt`
    - `採用担当者名寄せ/設定.example.txt` → `採用担当者名寄せ/設定.txt`（ハローワーク CSV の場所）
 
 ```
 3-目検/
-├─ APIキー.txt               ← 自分で置く（Git には入れない）
+├─ APIキー.example.txt       ← ひな形（これをコピー）
+├─ APIキー.txt               ← 自分で作る（Git には入れない）
 ├─ 目検ツール/
 ├─ 郵便番号補完ツール/
 │   └─ data/utf_ken_all.csv   ← 日本郵便の郵便番号データ（同梱）

@@ -42,7 +42,7 @@ Backlog の課題の「リスト詳細」を 1 行ずつ確認しながら、納
    git clone https://github.com/STREAM-inc/checkTool.git 3-目検
    ```
 
-2. `3-目検` の直下に `APIキー.txt`（Backlog の API キー）を置く
+2. `3-目検` の直下の `APIキー.example.txt` を `APIキー.txt` にコピーし、中身を自分の Backlog の API キー 1 行だけにする
 3. 必要なら `設定.example.txt` を `設定.txt` にコピーして書き換える（無くても初期値で動きます）
 
 | 設定 | 初期値 | 内容 |
