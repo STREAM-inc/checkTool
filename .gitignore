@@ -1,24 +1,32 @@
-# 顧客データ・作業データ（アップロードしない）
-checks/
+# ===== 秘密情報・個人設定（絶対にアップロードしない）=====
+APIキー.txt
+設定.txt
+tasks.json
+tasks.json.bak
+desktop.ini
+
+# ===== 顧客データ・作業データ（各ツール共通）=====
 input/
 input_done/
 output/
-exclude/
+IN/
+OUT/
 cache/
-tasks.json
-tasks.json.bak
+checks/
+exclude/
+処理済み原本/
+その他/
 *.tmp
 
-# 個人の設定・APIキー
-設定.txt
-APIキー.txt
-
-# 念のためリストのファイルは全部除外（市外局番データだけ残す）
+# ===== リスト・キャッシュのファイル =====
 *.csv
 *.xlsx
 *.xlsm
-!data/shigai_kyokuban.csv
+*.sqlite
+# 公開データだけは残す
+!目検ツール/data/shigai_kyokuban.csv
+!郵便番号補完ツール/data/utf_ken_all.csv
 
-# Python
+# ===== Python =====
 __pycache__/
 *.pyc
